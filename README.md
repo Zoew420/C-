@@ -1,1 +1,1 @@
-[![Build Status](https://travis-ci.org/gujans/travis-gtest-cmake-example.svg?branch=master)](https://travis-ci.org/gujans/travis-gtest-cmake-example)
+[![Build Status](https://travis-ci.com/heywowo/C-.svg?branch=master)](https://travis-ci.com/heywowo/C-)
