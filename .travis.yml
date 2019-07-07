@@ -1,12 +1,12 @@
 jobs:
-	include:
-    -	os: windows
-		language: sh
-		filter_secrets: false
-		env:
-			- CMAKE_PATH="C:/Program Files/CMake/bin"
-		install:
-			- export PATH=$CMAKE_PATH:$PATH
-			- mkdir build
-			- cd build
-			- cmake ..
+include:
+- os: windows
+language: sh
+filter_secrets: false
+env:
+- CMAKE_PATH="C:/Program Files/CMake/bin"
+install:
+- export PATH=$CMAKE_PATH:$PATH
+- mkdir build
+- cd build
+- cmake ..
