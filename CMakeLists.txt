@@ -1,3 +1,3 @@
 cmake_minimum_required (VERSION 3.8)
 
-add_executable (CITest "test.cpp")
+add_executable (TestEntry "test.cpp")
