@@ -2,7 +2,4 @@ os: windows
 language: cpp
 filter_secrets: false
 script:
-- mkdir build
-- cd build
-- cmake ..
-- ./TestEntry.exe
+- ./build.bat
