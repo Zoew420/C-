@@ -1,4 +1,4 @@
 mkdir build
 cd build
 cmake ..
-./TestEntry.exe
+TestEntry.exe
