@@ -2,5 +2,6 @@ mkdir build
 cd build
 cmake ..
 ls ./
-MSBuild TestEntry.sln
+MSBuild Project.sln
+ls ./
 TestEntry.exe
