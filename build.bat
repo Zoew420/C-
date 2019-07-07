@@ -2,6 +2,7 @@ mkdir build
 cd build
 cmake ..
 ls ./
-MSBuild Project.sln
+where MSBuild
+MSBuild.exe Project.sln
 ls ./
 TestEntry.exe
