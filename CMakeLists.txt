@@ -7,12 +7,16 @@ set(src
 	view_model/game_view_model
 )
 
+set(tests
+	test/01_placeholder
+)
+
 set(targets
 	Game
 	TestEntry
 )
 
-add_executable (TestEntry "test.cpp" ${src})
+add_executable (TestEntry "test/test.cpp" ${src} ${tests})
 add_executable (Game "game_app.cpp" ${src})
 
 foreach(tg ${targets})
