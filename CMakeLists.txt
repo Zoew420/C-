@@ -1,3 +1,20 @@
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.10)
 
-add_executable (TestEntry "test.cpp")
+set(src
+	common/event
+	common/particle
+	view/game_view
+	view_model/game_view_model
+)
+
+set(targets
+	Game
+	TestEntry
+)
+
+add_executable (TestEntry "test.cpp" ${src})
+add_executable (Game "game_app.cpp" ${src})
+
+foreach(tg ${targets})
+	set_property(TARGET ${tg} PROPERTY CXX_STANDARD 17)
+endforeach()
