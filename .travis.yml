@@ -1,12 +1,8 @@
 os: windows
 language: cpp
 filter_secrets: false
-env:
-- CMAKE_PATH="C:/Program Files/CMake/bin"
-- VC_PATH="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
 script:
-- export PATH=$VC_PATH:$PATH
-- vcvars64.bat
 - mkdir build
 - cd build
 - cmake ..
+- TestEntry.exe
