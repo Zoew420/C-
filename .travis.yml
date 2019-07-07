@@ -1,4 +1,5 @@
 os: windows
+language: cpp
 filter_secrets: false
 env:
 - CMAKE_PATH="C:/Program Files/CMake/bin"
