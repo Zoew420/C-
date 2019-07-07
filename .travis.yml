@@ -8,6 +8,7 @@ env:
 - VC_PATH="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
 install:
 - export PATH=$CMAKE_PATH:$VC_PATH:$PATH
+- ls "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
 - vcvars64.bat
 - mkdir build
 - cd build
