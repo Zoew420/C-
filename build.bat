@@ -2,8 +2,8 @@ mkdir build
 cd build
 cmake ..
 ls ./
-where MSBuild
-MSBuild.exe Project.sln /p:OutputPath=./
+mkdir out
+MSBuild.exe Project.sln /p:OutDir=out
+cd out
 ls ./
-ls ./Debug/
 TestEntry.exe
