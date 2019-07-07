@@ -1,14 +1,12 @@
-jobs:
-include:
-- os: windows
-language: sh
+os: windows
 filter_secrets: false
 env:
 - CMAKE_PATH="C:/Program Files/CMake/bin"
 - VC_PATH="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
-install:
-- export PATH=$CMAKE_PATH:$VC_PATH:$PATH
-- ls "C:/Program Files (x86)/Microsoft Visual Studio/"
+- MSBUILD_PATH="c:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin"
+script:
+- export PATH=$MSBUILD_PATH:$PATH
+- ls $MSBUILD_PATH
 - vcvars64.bat
 - mkdir build
 - cd build
