@@ -4,10 +4,8 @@ filter_secrets: false
 env:
 - CMAKE_PATH="C:/Program Files/CMake/bin"
 - VC_PATH="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
-- MSBUILD_PATH="c:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin"
 script:
-- export PATH=$MSBUILD_PATH:$PATH
-- ls $MSBUILD_PATH
+- export PATH=$VC_PATH:$PATH
 - vcvars64.bat
 - mkdir build
 - cd build
