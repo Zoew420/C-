@@ -5,9 +5,10 @@ language: sh
 filter_secrets: false
 env:
 - CMAKE_PATH="C:/Program Files/CMake/bin"
+- VC_PATH="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
 install:
-- export PATH=$CMAKE_PATH:$PATH
-- "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/vcvars64.bat"
+- export PATH=$CMAKE_PATH:$VC_PATH:$PATH
+- vcvars64.bat
 - mkdir build
 - cd build
 - cmake ..
