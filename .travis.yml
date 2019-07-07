@@ -1,7 +1,10 @@
 jobs:
   include:
     - os: windows
-      language: sh
+      language: cpp
       filter_secrets: false
-      before_install:
+      install:
         - echo test
+		- mkdir build
+		- cd build
+		- cmake ..
