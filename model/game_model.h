@@ -2,26 +2,29 @@
 #include "../common/particle.h"
 #include "../common/event.h"
 #include "../common/ping_pong.h"
+#include <vector>
 
 namespace T {
-    struct AirFlowState {
-        float* map_vx;
-        float* map_vy;
-        // ..
-    };
+    using namespace std;
 
-    struct State {
-        int particles;
-        int* map_index; // 画布某个位置的粒子下标 map_index[idx(r,c)]
-        ParticleType* p_type;
-        vec2* p_pos;
-        vec2* p_acc;
-        vec2* p_vel;
-        AirFlowState air_flow;
-    };
 
     // 示意代码
     class GameModel {
+
+        struct AirFlowState {
+            vector<float> map_vx, map_vy;
+            // TODO: ..
+            AirFlowState(int n_map) : map_vx(n_map), map_vy(n_map) {};
+        };
+
+        struct State {
+            int particles;
+            vector<int> map_index; // 画布某个位置的粒子下标 map_index[idx(r,c)]
+            vector<ParticleType> p_type;
+            vector<vec2> p_pos, p_acc, p_vel;
+            AirFlowState air_flow;
+            State(int n, int n_map) : particles(n), map_index(n_map), p_type(n), p_pos(n), p_acc(n), p_vel(n), air_flow(n_map) {}
+        };
 
         // 由于我们的程序是计算密集的，因此这里不用结构体数组
         // 而用更原始的单列的数组，出于两点原因：
@@ -43,11 +46,16 @@ namespace T {
                 // TODO: ...
             }
         }
-        void compute_air_flow() {}
-        void compute_position() {}
+        void compute_air_flow() {
+            // TODO: 计算气流场
+        }
+        void compute_position() {
+            // TODO: 更新位置
+            // 碰撞检测
+        }
 
     public:
-
+        GameModel(int w, int h) : width(w), height(h), state(State(0, w* h), State(0, w* h)) {};
         void update() {
             state.swap();
             compute_force();
