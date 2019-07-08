@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.10)
 set(src
 	common/event
 	common/particle
+	model/game_model
 	view/game_view
 	view_model/game_view_model
 )
