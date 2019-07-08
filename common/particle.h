@@ -13,7 +13,7 @@ namespace T {
         Iron = 2
     };
 
-    float particle_mass() {
+    float particle_mass(ParticleType type) {
         return 1.;
     }
 
