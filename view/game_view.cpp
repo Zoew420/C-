@@ -169,7 +169,7 @@ void T::GameView::Update_Event()
 		vector<string> s;
 		s.push_back(draw_Iron);
 		s.push_back(No_draw_Sand);
-		Command = make_shared<EventHandler<vector<string>>>(s);
+		//Command = make_shared<EventHandler<vector<string>>>(s);
 		//event_update.add_handler(Command);
 	}
 	else if (Draw_Iron == false && Draw_Sand == true)
@@ -179,7 +179,7 @@ void T::GameView::Update_Event()
 		vector<string> s;
 		s.push_back(No_draw_Iron);
 		s.push_back(draw_Sand);
-		Command = make_shared<EventHandler<vector<string>>>(s);
+		//Command = make_shared<EventHandler<vector<string>>>(s);
 		//event_update.add_handler(Command);
 	}
 }

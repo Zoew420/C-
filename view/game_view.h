@@ -33,7 +33,7 @@ namespace T {
 		void Updata_ParticleInfo();
 
 	private:
-		shared_ptr<EventHandler<vector<string>>> Command;
+		//shared_ptr<EventHandler<vector<string>>> Command;
     };
 
 	class GameWindow :public GameView{
