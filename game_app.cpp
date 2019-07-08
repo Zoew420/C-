@@ -5,6 +5,8 @@
 using namespace T;
 
 int main() {
+	GameWindow win;
+	win.OnCreate();
     GameView gv;
     GameViewModel gvm;
     gv.event_update += gvm.on_update;

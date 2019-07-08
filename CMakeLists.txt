@@ -17,9 +17,12 @@ set(targets
 	TestEntry
 )
 
+add_subdirectory(view/imgui)
+
 add_executable (TestEntry "test/test.cpp" ${src} ${tests})
 add_executable (Game "game_app.cpp" ${src})
 
 foreach(tg ${targets})
 	set_property(TARGET ${tg} PROPERTY CXX_STANDARD 17)
+	target_link_libraries(${tg} ImGui)
 endforeach()
