@@ -13,7 +13,7 @@ public:
     AssertionError(const string& msg) : exception(msg.c_str()) {};
 };
 
-inline void assert(bool b, const string& msg) {
+inline void expect(bool b, const string& msg) {
     if (!b) throw AssertionError(msg);
 }
 

@@ -13,7 +13,7 @@ namespace T {
         Iron = 2
     };
 
-    float particle_mass(ParticleType type) {
+    inline float particle_mass(ParticleType type) {
         return 1.;
     }
 
@@ -59,6 +59,8 @@ namespace T {
     struct ParticleBrush {
         vec2 center;
         float radius;
-        ParticleType type;
+        ParticleType type = ParticleType::None;
+        ParticleBrush() = default;
+        ParticleBrush(vec2 center, float radius, ParticleType type) : center(center), radius(radius), type(type) {}
     };
 }
