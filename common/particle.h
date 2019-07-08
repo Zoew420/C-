@@ -8,42 +8,46 @@ namespace T {
 
     // 粒子类型
     enum class ParticleType {
-        None,
-        Sand,
-        Iron
+        None = 0,
+        Sand = 1,
+        Iron = 2
     };
 
-    // 粒子基类
-    struct IParticle {
-        virtual ParticleType get_type() = 0;
-        float temperature = 0.f;
-        vec2 position = vec2();
-    };
+    float particle_mass() {
+        return 1.;
+    }
 
-    // 粉尘粒子基类
-    struct IPowder : IParticle {
-        virtual float get_mass() = 0;
-        vec2 velocity = vec2();
-    };
+    //// 粒子基类
+    //struct IParticle {
+    //    virtual ParticleType get_type() = 0;
+    //    float temperature = 0.f;
+    //    vec2 position = vec2();
+    //};
 
-    // 固体粒子基类
-    struct ISolid : IParticle {
+    //// 粉尘粒子基类
+    //struct IPowder : IParticle {
+    //    virtual float get_mass() = 0;
+    //    vec2 velocity = vec2();
+    //};
 
-    };
+    //// 固体粒子基类
+    //struct ISolid : IParticle {
 
-    // 沙
-    struct Sand : IPowder {
-        ParticleType get_type() { return ParticleType::Sand; }
-        float get_mass() { return 1.f; }
-    };
+    //};
 
-    // 铁
-    struct Iron : ISolid {
-        ParticleType get_type() { return ParticleType::Iron; }
-    };
+    //// 沙
+    //struct Sand : IPowder {
+    //    ParticleType get_type() { return ParticleType::Sand; }
+    //    float get_mass() { return 1.f; }
+    //};
+
+    //// 铁
+    //struct Iron : ISolid {
+    //    ParticleType get_type() { return ParticleType::Iron; }
+    //};
 
     // 通用粒子类
-    using Particle = variant<Sand, Iron>;
+    //using Particle = variant<Sand, Iron>;
 
     // 粒子的简略信息，由ViewModel返回给View
     struct ParticleInfo {

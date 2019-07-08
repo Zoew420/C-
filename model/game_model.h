@@ -2,6 +2,7 @@
 #include "../common/particle.h"
 #include "../common/event.h"
 #include "../common/ping_pong.h"
+#include "constant.h"
 #include <vector>
 
 namespace T {
@@ -40,10 +41,24 @@ namespace T {
         int f2i(float v) { return v + 0.5; }
 
         void compute_force() {
-            for (int i = 0; i < state.prev()->particles; i++) {
-                int im = idx(f2i(state.prev()->p_pos[i]));
-                vec2 v_air = vec2(state.prev()->air_flow.map_vx[i], state.prev()->air_flow.map_vy[i]);
-                // TODO: ...
+            for (int ip = 0; ip < state.prev()->particles; ip++) {
+                // get map index
+                int im = idx(f2i(state.prev()->p_pos[ip]));
+
+                // get the air velocity
+                vec2 v_air = vec2(state.prev()->air_flow.map_vx[im], state.prev()->air_flow.map_vy[im]);
+                
+                // get the particle velocity
+                vec2 v_p = state.prev()->p_vel[ip];
+
+                // get the relative velocity
+                vec2 v_rel = v_p - v_air;
+
+                // get the air pressure
+                float p = 1.f; // TODO: get from air_flow
+
+                vec2 f_resis = -K_AIR_RESISTANCE * p * v_rel * length(v_rel);
+                vec2 f_gravity = K_GRAVITY * vec2(0,1) * 
             }
         }
         void compute_air_flow() {
