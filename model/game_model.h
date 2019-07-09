@@ -88,7 +88,7 @@ namespace T {
 
         bool in_bound(int r, int c) { return r >= 0 && r < height && c >= 0 && c < width; }
         bool in_bound(ivec2 v) { return in_bound(v.y, v.x); }
-        int idx(int r, int c) { assert(in_bound(r, c)); return r * width + c; }
+        int idx(int r, int c) { return r * width + c; }
         int idx(ivec2 v) { return idx(v.y, v.x); }
 
 
@@ -117,8 +117,8 @@ namespace T {
                 for (int i = 0; i < state_cur.particles; i++) {
                     if (state_cur.p_type[i] == ParticleType::Sand) {
                         int im = idx(f2i(state_cur.p_pos[i]));
-                        if (flag == 1)value[im] = state_cur.p_vel[i].x / 100;
-                        else if (flag == 2)value[im] = state_cur.p_vel[i].y / 100;
+                        if (flag == 1)value[im] = state_cur.p_vel[i].x;
+                        else if (flag == 2)value[im] = state_cur.p_vel[i].y;
                     }
                     else if (state_cur.p_type[i] == ParticleType::Iron) {
                         int im = idx(f2i(state_cur.p_pos[i]));
@@ -334,8 +334,8 @@ namespace T {
             reorder_buf.p_idx.clear();
             reorder_buf.sort.clear();
             for (int ip = 0; ip < n_next; ip++) {
+                reorder_buf.p_idx.push_back(idx(f2i(state_next.p_pos[ip])));
                 if (state_next.p_type[ip] != ParticleType::None) {
-                    reorder_buf.p_idx.push_back(idx(f2i(state_next.p_pos[ip])));
                     reorder_buf.sort.push_back(ip);
                 }
             }
