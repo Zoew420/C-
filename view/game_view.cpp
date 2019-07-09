@@ -106,8 +106,8 @@ void T::GameWindow::OnCreate()
 			ImGui::Begin("State Choose:", &show_menu, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Text("State Choose:");
 			ImGui::SameLine(); HelpMarker("Once can only choose one state to draw");
-			ImGui::CheckboxFlags("Sand", (unsigned int*)&Draw_Sand, 1); ImGui::SameLine(150);
-			ImGui::CheckboxFlags("Iron", (unsigned int*)&Draw_Iron, 1); ImGui::SameLine(300);
+			ImGui::CheckboxFlags("Sand", (unsigned int*)&draw_sand, 1); ImGui::SameLine(150);
+			ImGui::CheckboxFlags("Iron", (unsigned int*)&draw_iron, 1); ImGui::SameLine(300);
 			ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y); ImGui::SameLine(550);
 			ImGui::Text("Mouse down:");
 			if (io.MouseDownDuration[0] >= 0.0f)
@@ -128,7 +128,7 @@ void T::GameWindow::OnCreate()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//S方向上的贴图模式
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//T方向
-		//event_update.trigger();
+		event_update.trigger();
 		MouseClickEvent();
 		//绘制
 		ImGui::Render();
@@ -159,44 +159,18 @@ void T::GameWindow::MouseClickEvent()
 		else if (x < 400 & y > 300) {
 			x -= 400; y = 300 - y;
 		}
-		/*vec2 p;
+		vec2 p;
 		p.x = x; p.y = y;
-		mouse_click->handle(p);*/
-		DrawCircle(x, y, 10.0f, 50, texture[0]);
+		UpdataParticles(p)
+		//DrawCircle(x, y, 10.0f, 50, texture[0]);
 	}
 }
 
-//void T::GameWindow::Draw()
-//{
-//	glLoadIdentity();
-//	glMatrixMode(GL_MODELVIEW);
-//	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-//	
-//	ImGuiIO& io = ImGui::GetIO();
-//	GLfloat x, y;
-//	x = io.MousePos.x;
-//	y = io.MousePos.y;
-//	if (x >= 400 & y >= 300) {
-//		x -= 400; y = 300 - y;
-//	}
-//	else if (x >= 400 & y < 300) {//第一象限
-//		x -= 400; y = 300 - y;
-//	}
-//	else if (x < 400 & y < 300) {
-//		x -= 400; y = 300 - y;
-//	}
-//	else if (x < 400 & y > 300) {
-//		x -= 400; y = 300 - y;
-//	}
-//	DrawCircle(0.0, 0.0, 1.0f, 50, texture[0]);
-//}
-
 T::GameView::GameView()
 {
-	Draw_Iron = false;
-	Draw_Sand = false;
+	draw_iron = false;
+	draw_sand = false;
 	on_data_ready = make_shared<DataReadyEventHandler>(this);
-	mouse_click = make_shared<MouseclickEventHandle>(this);
 }
 
 void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
@@ -230,8 +204,8 @@ void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
 void T::GameView::UpdataParticles(const glm::vec2 & point)
 {
 	ParticleBrush b;
-	if (Draw_Iron) b.type = ParticleType::Iron;
-	else if (Draw_Sand) b.type = ParticleType::Sand;
+	if (draw_iron) b.type = ParticleType::Iron;
+	else if (draw_sand) b.type = ParticleType::Sand;
 	b.radius = 3.0f;
 	b.center = point;
 	event_new_particles.trigger(b);
