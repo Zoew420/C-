@@ -4,6 +4,7 @@ set(src
 	common/event
 	common/particle
 	model/game_model
+	model/GridStableSolver
 	view/game_view
 	view/game_drawParticles
 	view/ViewEventHandler/game_DataReadyEventHandle

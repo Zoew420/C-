@@ -2,6 +2,7 @@
 #include "../common/particle.h"
 #include "../common/event.h"
 #include "../common/ping_pong.h"
+#include "GridStableSolver.h"
 #include "constant.h"
 #include <algorithm>
 #include "utility.h"
@@ -14,6 +15,9 @@ namespace T {
     // Ê¾Òâ´úÂë
     class GameModel {
     public:
+
+        StableSolver airflow_solver;
+
         struct map_v {
             vector<float> map_vx, map_vy;
             map_v(int n_map) :map_vx(n_map), map_vy(n_map) {};
@@ -254,13 +258,14 @@ namespace T {
 
         void compute_air_flow() {
             //diffusion not written here
-            projection();
+            //projection();
 
-            airstate.mapv.swap();
-            advection(airstate.mapv.cur()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 1);
-            advection(airstate.mapv.cur()->map_vy, airstate.mapv.prev()->map_vy, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 2);
+            //airstate.mapv.swap();
+            //advection(airstate.mapv.cur()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 1);
+            //advection(airstate.mapv.cur()->map_vy, airstate.mapv.prev()->map_vy, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 2);
 
-            projection();
+            //projection();
+            airflow_solver.animVel();
         }
 
         struct CollisionDetectionResult {
@@ -386,14 +391,16 @@ namespace T {
 
     public:
         GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next(), airstate(w * h) {
-            for (int i = 0; i < height; i++)
-            {
-                for (int j = 0; j < width; j++)
-                {
-                    airstate.px[idx(i, j)] = (float)j + 0.5f;
-                    airstate.py[idx(i, j)] = (float)i + 0.5f;
-                }
-            }
+            //for (int i = 0; i < height; i++)
+            //{
+            //    for (int j = 0; j < width; j++)
+            //    {
+            //        airstate.px[idx(i, j)] = (float)j + 0.5f;
+            //        airstate.py[idx(i, j)] = (float)i + 0.5f;
+            //    }
+            //}
+            airflow_solver.init(h, w);
+            airflow_solver.reset();
         };
 
         void update() {
