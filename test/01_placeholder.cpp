@@ -10,7 +10,7 @@ const int msize = 32;
 int map[msize][msize];
 
 TEST_CASE(model_simplistic_test) {
-    //return;
+    return;
 
 
     using namespace T;
