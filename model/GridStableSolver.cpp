@@ -163,7 +163,7 @@ void StableSolver::projection()
     setBoundary(p, 0);
 
     //projection iteration
-    for (int k = 0; k < 20; k++)
+    for (int k = 0; k < 10; k++)
     {
         for (int i = 1; i <= rowSize - 2; i++)
         {

@@ -279,6 +279,7 @@ namespace T {
             }
 
             airflow_solver.animVel();
+            airflow_solver.vortConfinement();
         }
 
         struct CollisionDetectionResult {

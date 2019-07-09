@@ -36,6 +36,5 @@ add_executable (Visualizer ${src} ${src_visualizer})
 foreach(tg ${targets})
 	set_property(TARGET ${tg} PROPERTY CXX_STANDARD 17)
 	target_link_libraries(${tg} ImGui)
+	set_target_properties(${tg} PROPERTIES LINK_FLAGS "/PROFILE")
 endforeach()
-
-set_target_properties(TestEntry PROPERTIES LINK_FLAGS "/PROFILE")

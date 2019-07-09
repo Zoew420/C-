@@ -2,14 +2,22 @@
 #include "../model/game_model.h"
 
 using namespace T;
-const int msize = 100;
+const int msize = 400;
 int map[msize][msize];
 
 
 int main() {
-    my3d::present::initialize(GetConsoleWindow(), 400, 400, 4);
+    my3d::present::initialize(GetConsoleWindow(), 800, 800, 2);
     GameModel gm(msize, msize);
-    gm.set_new_particles(ParticleBrush(vec2(50, 10), 4, ParticleType::Sand));
+    gm.set_new_particles(ParticleBrush(vec2(120, 20), 10, ParticleType::Sand));
+    
+    //getchar();
+    //cout << "start";
+    //for (int i = 0; i < 1000; i++) {
+    //    gm.update();
+    //}
+    //cout << endl;
+    
     while (1) {
 
         gm.update();
