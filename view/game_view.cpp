@@ -89,7 +89,11 @@ static void HelpMarker(const char* desc)
 
 void T::GameWindow::OnCreate()
 {
-	bool show_menu = true;
+	bool show_state_choice = true;
+	bool show_brush_choice = true;
+	bool show_mouse_state = true;
+	bool exit_button = true;
+
 	while (!glfwWindowShouldClose(window)) {
 		//渲染循环
 		glfwSwapBuffers(window);
@@ -101,20 +105,63 @@ void T::GameWindow::OnCreate()
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		if (show_menu) {
+		if (show_state_choice) {
 			ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Appearing);
-			ImGui::Begin("State Choose:", &show_menu, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Begin("State Choose:", &show_state_choice, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Text("State Choose:");
 			ImGui::SameLine(); HelpMarker("Once can only choose one state to draw");
 			ImGui::CheckboxFlags("Sand", (unsigned int*)&draw_sand, 1); ImGui::SameLine(150);
-			ImGui::CheckboxFlags("Iron", (unsigned int*)&draw_iron, 1); ImGui::SameLine(300);
-			ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y); ImGui::SameLine(550);
-			ImGui::Text("Mouse down:");
+			if (draw_sand == true) draw_iron = false;
+			ImGui::CheckboxFlags("Iron", (unsigned int*)&draw_iron, 1); 
+			if (draw_iron == true) draw_sand = false;
+			ImGui::End();
+		}
+		if (show_brush_choice) {
+			ImGui::SetNextWindowPos(ImVec2(300, 0), ImGuiCond_Appearing);
+			ImGui::Begin("Brush Choose:", &show_brush_choice, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text("Brush Choose:");
+			ImGui::SameLine(); HelpMarker("Once can only choose one brush to draw");
+			ImGui::CheckboxFlags("1 pix", (unsigned int*)&brush_1pix, 1); ImGui::SameLine(150);
+			if (brush_1pix == true) {
+				brush_5pix = false;
+				brush_10pix = false;
+			}
+			ImGui::CheckboxFlags("5 pix", (unsigned int*)&brush_5pix, 1); ImGui::SameLine(300);
+			if (brush_5pix == true) {
+				brush_1pix = false;
+				brush_10pix = false;
+			}
+			ImGui::CheckboxFlags("10 pix", (unsigned int*)&brush_10pix, 1); 
+			if (brush_10pix == true) {
+				brush_1pix = false;
+				brush_5pix = false;
+			}
+			ImGui::End();
+		}
+
+		if (exit_button) {
+			ImGui::SetNextWindowPos(ImVec2(750, 0), ImGuiCond_Appearing);
+			ImGui::Begin("exit button", &exit_button, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Button("Exit");
+			ImGui::End();
+		}
+
+		if (show_mouse_state) {
+			ImGui::SetNextWindowPos(ImVec2(475, 580), ImGuiCond_Appearing);
+			ImGui::Begin("Mouse state:", &show_state_choice, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y); ImGui::SameLine();
+			ImGui::Text("Click Last:");
 			if (io.MouseDownDuration[0] >= 0.0f)
 			{
 				ImGui::SameLine();
 				ImGui::Text("(%.02f secs)", io.MouseDownDuration[0]);
+				if (io.MousePos.x >= 760 && io.MousePos.x < 800 && io.MousePos.y >= 5 && io.MousePos.y <= 25) exit(0);
 			}
+			else {
+				ImGui::SameLine();
+				ImGui::Text("(0 secs)");
+			}
+
 			ImGui::End();
 		}
 
@@ -128,7 +175,7 @@ void T::GameWindow::OnCreate()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//S方向上的贴图模式
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//T方向
-		event_update.trigger();
+		//event_update.trigger();
 		MouseClickEvent();
 		//绘制
 		ImGui::Render();
@@ -161,7 +208,7 @@ void T::GameWindow::MouseClickEvent()
 		}
 		vec2 p;
 		p.x = x; p.y = y;
-        UpdataParticles(p);
+		UpdataParticles(p);
 		//DrawCircle(x, y, 10.0f, 50, texture[0]);
 	}
 }
@@ -170,6 +217,9 @@ T::GameView::GameView()
 {
 	draw_iron = false;
 	draw_sand = false;
+	brush_1pix = false;
+	brush_5pix = true;
+	brush_10pix = false;
 	on_data_ready = make_shared<DataReadyEventHandler>(this);
 }
 
@@ -206,7 +256,9 @@ void T::GameView::UpdataParticles(const glm::vec2 & point)
 	ParticleBrush b;
 	if (draw_iron) b.type = ParticleType::Iron;
 	else if (draw_sand) b.type = ParticleType::Sand;
-	b.radius = 3.0f;
+	if (brush_1pix) b.radius = 1.0f;
+	else if (brush_5pix) b.radius = 5.0f;
+	else if (brush_10pix) b.radius = 10.0f;
 	b.center = point;
 	event_new_particles.trigger(b);
 }
