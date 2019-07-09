@@ -13,12 +13,19 @@ namespace T {
 
     // 示意代码
     class GameModel {
+    public:
+        struct map_v {
+            vector<float> map_vx, map_vy;
+            map_v(int n_map) :map_vx(n_map), map_vy(n_map) {};
+        };
+
 
         struct AirFlowState {
-            vector<float> map_vx, map_vy;
-            // TODO: ..
-            AirFlowState(int n_map) : map_vx(n_map), map_vy(n_map) {};
-        };
+            vector<float> px, py, div, p;
+            PingPong<map_v>mapv;
+            AirFlowState(int n_map) : mapv(n_map, n_map), div(n_map), p(n_map), px(n_map), py(n_map) {
+            };
+        }airstate;
 
         // 记录一个像素点内全部的粒子
         struct PixelParticleList {
@@ -104,8 +111,156 @@ namespace T {
             }
         }
 
+        void setBoundary(vector<float> & value, int flag)
+        {
+            if (flag != 0) {
+                for (int i = 0; i < state_cur.particles; i++) {
+                    if (state_cur.p_type[i] == ParticleType::Sand) {
+                        int im = idx(f2i(state_cur.p_pos[i]));
+                        if (flag == 1)value[im] = state_cur.p_vel[i].x / 100;
+                        else if (flag == 2)value[im] = state_cur.p_vel[i].y / 100;
+                    }
+                    else if (state_cur.p_type[i] == ParticleType::Iron) {
+                        int im = idx(f2i(state_cur.p_pos[i]));
+                        value[im] = 0;
+                    }
+                }
+            }
+            for (int i = 1; i < width - 1; i++) {
+                value[idx(0, i)] = value[idx(1, i)];
+                value[idx(height - 1, i)] = value[idx(height - 2, i)];
+            }
+            for (int i = 1; i < height - 1; i++) {
+                value[idx(i, 0)] = value[idx(i, 1)];
+                value[idx(i, width - 1)] = value[idx(i, width - 2)];
+            }
+            value[idx(0, 0)] = (value[idx(0, 1)] + value[idx(1, 0)]) / 2;
+            value[idx(0, width - 1)] = (value[idx(0, width - 2)] + value[idx(1, width - 1)]) / 2;
+            value[idx(height - 1, 0)] = (value[idx(height - 2, 0)] + value[idx(height - 1, 1)]) / 2;
+            value[idx(height - 1, width - 1)] = (value[idx(height - 2, width - 1)] + value[idx(height - 1, width - 2)]) / 2;
+        }
+
+
+        // diffusion(vx, vx0, diff, flag);
+        // no need
+        // diff determine the speed
+        /*
+        void diffusion(vector<float>value, vector<float>value0, float rate, int flag)
+        {
+            for (int i = 0; i < width * height; i++) value[i] = 0.0f;
+            float a = rate * dt;
+
+            for (int k = 0; k < 10; k++)
+            {
+                for (int i = 1; i <= height - 2; i++)
+                {
+                    for (int j = 1; j <= width - 2; j++)
+                    {
+                        value[idx(i, j)] = (value0[idx(i, j)] + a * (value[idx(i + 1, j)]
+                            + value[idx(i - 1, j)] + value[idx(i, j + 1)] +
+                            value[idx(i, j - 1)])) / (4.0f*a + 1.0f);
+                    }
+                }
+                setBoundary(value, flag);
+            }
+        }
+        */
+
+        void projection()
+        {
+            for (int i = 1; i <= height - 2; i++)
+            {
+                for (int j = 1; j <= width - 2; j++)
+                {
+                    airstate.div[idx(i, j)] =
+                        0.5f * (airstate.mapv.cur()->map_vx[idx(i + 1, j)] - airstate.mapv.cur()->map_vx[idx(i - 1, j)]
+                            + airstate.mapv.cur()->map_vy[idx(i, j + 1)] - airstate.mapv.cur()->map_vy[idx(i, j - 1)]);
+                    airstate.p[idx(i, j)] = 0.0f;;
+                }
+            }
+            setBoundary(airstate.div, 0);
+            setBoundary(airstate.p, 0);
+
+            //projection iteration
+            for (int k = 0; k < 20; k++)
+            {
+                for (int i = 1; i <= height - 2; i++)
+                {
+                    for (int j = 1; j <= width - 2; j++)
+                    {
+                        airstate.p[idx(i, j)] =
+                            (airstate.p[idx(i + 1, j)] + airstate.p[idx(i - 1, j)]
+                                + airstate.p[idx(i, j + 1)] + airstate.p[idx(i, j - 1)]
+                                - airstate.div[idx(i, j)]) / 4.0f;
+                    }
+                }
+                setBoundary(airstate.p, 0);
+            }
+
+            //velocity minus grad of Pressure
+            for (int i = 1; i <= height - 2; i++)
+            {
+                for (int j = 1; j <= width - 2; j++)
+                {
+                    airstate.mapv.cur()->map_vx[idx(i, j)] -= 0.5f * (airstate.p[idx(i + 1, j)] - airstate.p[idx(i - 1, j)]);
+                    airstate.mapv.cur()->map_vy[idx(i, j)] -= 0.5f * (airstate.p[idx(i, j + 1)] - airstate.p[idx(i, j - 1)]);
+                }
+            }
+            setBoundary(airstate.mapv.cur()->map_vx, 1);
+            setBoundary(airstate.mapv.cur()->map_vy, 2);
+        }
+
+        void advection(vector<float> & value, vector<float> & value0, vector<float> & u, vector<float> & v, int flag)
+        {
+            float oldX;
+            float oldY;
+            int i0;
+            int i1;
+            int j0;
+            int j1;
+            float wL;
+            float wR;
+            float wB;
+            float wT;
+
+            for (int i = 1; i <= height - 2; i++)
+            {
+                for (int j = 1; j <= width - 2; j++)
+                {
+                    oldX = airstate.px[idx(i, j)] - u[idx(i, j)] * dt;
+                    oldY = airstate.py[idx(i, j)] - v[idx(i, j)] * dt;
+
+                    if (oldX < 1.0f) oldX = 1.0f;
+                    if (oldX > width - 1.0f) oldX = width - 1.0f;
+                    if (oldY < 1.0f) oldY = 1.0f;
+                    if (oldY > height - 1.0f) oldY = height - 1.0f;
+
+                    i0 = (int)(oldX - 0.5f);
+                    j0 = (int)(oldY - 0.5f);
+                    i1 = i0 + 1;
+                    j1 = j0 + 1;
+
+                    wL = airstate.px[idx(i1, j0)] - oldX;
+                    wR = 1.0f - wL;
+                    wB = airstate.py[idx(i0, j1)] - oldY;
+                    wT = 1.0f - wB;
+
+                    value[idx(i, j)] = wB * (wL * value0[idx(i0, j0)] + wR * value0[idx(i1, j0)]) +
+                        wT * (wL * value0[idx(i0, j1)] + wR * value0[idx(i1, j1)]);
+                }
+            }
+            setBoundary(value, flag);
+        }
+
         void compute_air_flow() {
-            // TODO: 计算气流场
+            //diffusion not written here
+            projection();
+
+            airstate.mapv.swap();
+            advection(airstate.mapv.cur()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 1);
+            advection(airstate.mapv.cur()->map_vy, airstate.mapv.prev()->map_vy, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 2);
+
+            projection();
         }
 
         struct CollisionDetectionResult {
@@ -186,7 +341,7 @@ namespace T {
             }
 
             vector<int>& p_idx = reorder_buf.p_idx;
-            sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] - p_idx[i2]; });
+            sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] < p_idx[i2]; });
 
             int n_new = reorder_buf.sort.size();
             // 使用刚才的StateNext，生成下一个StateCur
@@ -230,7 +385,16 @@ namespace T {
         }
 
     public:
-        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next() {};
+        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next(), airstate(w * h) {
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    airstate.px[idx(i, j)] = (float)j + 0.5f;
+                    airstate.py[idx(i, j)] = (float)i + 0.5f;
+                }
+            }
+        };
 
         void update() {
             compute_vel();
@@ -248,7 +412,6 @@ namespace T {
             const vector<ParticleType>& type;
             const vector<vec2>& position;
         };
-
         QueryParticleResult query_particles() {
             return QueryParticleResult{ state_cur.p_type, state_cur.p_pos };
         }
