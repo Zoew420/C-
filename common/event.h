@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <iostream>
 namespace T {
     using namespace std;
 
@@ -18,7 +19,7 @@ namespace T {
     class LambdaEventHandler : public EventHandler<Args...> {
         function<void(Args...)> f;
     public:
-        LambdaEventHandler(function<void(Args...)> f) : f(move(f)) {}
+        LambdaEventHandler(function<void(Args...)> f) : f(f) {}
         void handle(Args... args) {
             f(args...);
         }
@@ -26,7 +27,8 @@ namespace T {
 
     template <typename... Args>
     inline shared_ptr<EventHandler<Args...>> function_handler(function<void(Args...)> f) {
-        return shared_ptr<EventHandler<Args...>>(new LambdaEventHandler<Args...>(f));
+        return static_pointer_cast<EventHandler<Args...>>(make_shared<LambdaEventHandler<Args...>>(f));
+        //return shared_ptr<EventHandler<Args...>>(new LambdaEventHandler<Args...>(f));
     }
 
     // 代表一个事件源
@@ -35,6 +37,9 @@ namespace T {
         vector<shared_ptr<EventHandler<Args...>>> _handlers;
 
     public:
+
+        EventSource() { cout << _handlers.size() << endl; };
+
         // 新增一个处理程序
         void add_handler(shared_ptr<EventHandler<Args...>> h) {
             _handlers.push_back(h);
@@ -64,7 +69,9 @@ namespace T {
 
         // 触发该事件
         void trigger(Args... args) {
+            cout << _handlers.size() << endl;
             for (auto& h : _handlers) {
+                cout << "!!!" << endl;
                 h->handle(args...);
             }
         }

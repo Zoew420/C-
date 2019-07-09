@@ -161,7 +161,7 @@ void T::GameWindow::MouseClickEvent()
 		}
 		vec2 p;
 		p.x = x; p.y = y;
-		UpdataParticles(p)
+        UpdataParticles(p);
 		//DrawCircle(x, y, 10.0f, 50, texture[0]);
 	}
 }
