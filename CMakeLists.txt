@@ -9,18 +9,26 @@ set(src
 )
 
 set(tests
+	test/test.cpp
 	test/01_placeholder
+)
+
+set(src_visualizer
+	visualizer/main
+	visualizer/my3dpresent
 )
 
 set(targets
 	Game
 	TestEntry
+	Visualizer
 )
 
 add_subdirectory(view/imgui)
 
-add_executable (TestEntry "test/test.cpp" ${src} ${tests})
+add_executable (TestEntry ${src} ${tests})
 add_executable (Game "game_app.cpp" ${src})
+add_executable (Visualizer ${src} ${src_visualizer})
 
 foreach(tg ${targets})
 	set_property(TARGET ${tg} PROPERTY CXX_STANDARD 17)

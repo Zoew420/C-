@@ -34,7 +34,7 @@ namespace T {
             _cur = move(_prev);
             _prev = move(t);
         }
-        T* cur() { return cur.get(); }
+        T* cur() { return _cur.get(); }
         T* prev() { return _prev.get(); }
         PingPong() : _cur(new T), _prev(new T) { }
         PingPong(T&& cur, T&& prev) : _cur(new T(move(cur))), _prev(new T(move(prev))) {}
