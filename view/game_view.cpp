@@ -116,6 +116,8 @@ void T::GameWindow::OnCreate()
 			}
 			ImGui::End();
 		}
+		Draw();
+
 		int display_w, display_h;
 		glfwMakeContextCurrent(window);
 		glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -150,40 +152,81 @@ void T::GameWindow::Draw()
 	else if (x < 400 & y > 300) {
 		x -= 400; y = 300 - y;
 	}
-	glVertex2i(x, y);
-	glVertex2i(x + 10, y + 10);
+	DrawCircle(x, y, 1.0f, 10, texture[0]);
+	DrawCircle(x + 10, y + 10, 1.0f, 10, texture[1]);
 	glEnd();
 }
 
 T::GameView::GameView()
 {
-
+	texture[0] = load_texture("1.bmp");
+	texture[1] = load_texture("2.bmp");
+	on_data_ready = make_shared<DataReadyEventHandler>(this);
 }
 
-void T::GameView::Update_Event()
+void T::GameView::Handler(const vector<ParticleInfo>& particles)
 {
-	if (Draw_Iron == true && Draw_Sand == false)
+	for (int i = 0; i < particles.size(); i++)
 	{
-		string draw_Iron = "Draw_Iron";
-		string No_draw_Sand = "No_Draw_Sand";
-		vector<string> s;
-		s.push_back(draw_Iron);
-		s.push_back(No_draw_Sand);
-		//Command = make_shared<EventHandler<vector<string>>>(s);
-		//event_update.add_handler(Command);
-	}
-	else if (Draw_Iron == false && Draw_Sand == true)
-	{
-		string No_draw_Iron = "No_Draw_Iron";
-		string draw_Sand = "Draw_Sand";
-		vector<string> s;
-		s.push_back(No_draw_Iron);
-		s.push_back(draw_Sand);
-		//Command = make_shared<EventHandler<vector<string>>>(s);
-		//event_update.add_handler(Command);
+		ImGuiIO& io = ImGui::GetIO();
+		glLoadIdentity();
+		glMatrixMode(GL_PROJECTION_MATRIX);
+		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+		if (particles[i].type == ParticleType::Iron)
+		{
+			float x = particles[i].position.x;
+			float y = particles[i].position.y;
+			DrawCircle(x, y, 1.0f, 10, texture[0]);
+		}
 	}
 }
 
-void T::GameView::Updata_ParticleInfo()
+void T::GameView::DrawCircle(float cx, float cy, float r, int num_segments, GLuint texName)
 {
+	GLfloat vertex[4];
+	GLfloat texcoord[2];
+
+	const GLfloat delta_angle = 2.0 * PI / num_segments;
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texName);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	glBegin(GL_TRIANGLE_FAN);
+
+	//draw the vertex at the center of the circle
+	texcoord[0] = 0.5 + cx;
+	texcoord[1] = 0.5 + cy;
+	glTexCoord2fv(texcoord);
+	vertex[0] = cx;
+	vertex[1] = cy;
+	vertex[2] = 0.0;
+	vertex[3] = 1.0;
+	glVertex4fv(vertex);
+
+	//draw the vertex on the contour of the circle   
+	for (int i = 0; i < num_segments; i++)
+	{
+		texcoord[0] = (std::cos(delta_angle * i) + 1.0) * 0.5 + cx;
+		texcoord[1] = (std::sin(delta_angle * i) + 1.0) * 0.5 + cy;
+		glTexCoord2fv(texcoord);
+
+		vertex[0] = std::cos(delta_angle * i) * r + cx;
+		vertex[1] = std::sin(delta_angle * i) * r + cy;
+		vertex[2] = 0.0;
+		vertex[3] = 1.0;
+		glVertex4fv(vertex);
+	}
+	texcoord[0] = (1.0 + 1.0) * 0.5 + cx;
+	texcoord[1] = (0.0 + 1.0) * 0.5 + cy;
+	glTexCoord2fv(texcoord);
+
+	vertex[0] = 1.0 * r + cx;
+	vertex[1] = 0.0 * r + cy;
+	vertex[2] = 0.0;
+	vertex[3] = 1.0;
+	glVertex4fv(vertex);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
 }
+

@@ -1,4 +1,5 @@
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS 
 #include "../common/event.h"
 #include "../common/particle.h"
 #include "imgui/imgui/imgui.h"
@@ -6,7 +7,13 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "imgui/glew/GL/glew.h"
 #include "imgui/glfw/include/GLFW/glfw3.h"
+#include "ViewEventHandler/DataReadyEventHandle.h"
+#include "loadBrushTexture.h"
 #include <iostream>
+#include <vector>
+#define PI       3.14159265358979323846
+/*Iron和Sand画笔的纹理*/
+GLuint texture[1];
 
 namespace T {
     using namespace std;
@@ -26,32 +33,11 @@ namespace T {
         // 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
         shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
 
-        class DataReadyEventHandler : public EventHandler<const vector<ParticleInfo>&> {
-            GameView* view;
-        public:
-            DataReadyEventHandler(GameView* view) : view(view) {}
-            void handle(const vector<ParticleInfo>& particles) {
-                view->Handler();
-            }
-        };
-
-        void Handler() {
-
-        }
-
-        void Test() {
-            on_data_ready = make_shared<DataReadyEventHandler>(this);
-        }
-
-
         GameView();
 
-		void Update_Event();
+		void Handler(const vector<ParticleInfo>& particles);
 
-		void Updata_ParticleInfo();
-
-	private:
-		//shared_ptr<EventHandler<vector<string>>> Command;
+		void DrawCircle(float cx, float cy, float r, int num_segments, GLuint texName);
     };
 
 	class GameWindow :public GameView{
