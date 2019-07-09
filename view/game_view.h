@@ -19,8 +19,12 @@ namespace T {
     class GameView {
     public:
 		/*绘制沙子与绘制固体的bool值*/
-		bool Draw_Sand;
-		bool Draw_Iron;
+		bool draw_sand;
+		bool draw_iron;
+		/*画笔大小的选择*/
+		bool brush_1pix;
+		bool brush_5pix;
+		bool brush_10pix;
 		/*Iron和Sand画笔的纹理*/
 		GLuint texture[1];
 
@@ -32,9 +36,6 @@ namespace T {
 
         // 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
         shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
-
-		//鼠标点击时的处理函数
-		shared_ptr<EventHandler<const vec2 &>> mouse_click;
 		
 		GameView();
 
@@ -51,6 +52,5 @@ namespace T {
 		~GameWindow();
 		void OnCreate();
 		void MouseClickEvent();
-		/*void Draw();*/
 	};
 }
