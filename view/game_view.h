@@ -25,7 +25,7 @@ namespace T {
 		bool brush_5pix;
 		bool brush_10pix;
 		/*Iron和Sand画笔的纹理*/
-		GLuint texture[1];
+		GLuint texture[2];
 
         // 更新事件源（View通知ViewModel进行逻辑更新）
         EventSource<> event_update;

@@ -94,6 +94,14 @@ void T::GameWindow::OnCreate()
 	bool show_mouse_state = true;
 	bool exit_button = true;
 
+
+    texture[0] = load_texture("2.bmp");
+    texture[1] = load_texture("duck.bmp");
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//S方向上的贴图模式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//T方向
+
 	while (!glfwWindowShouldClose(window)) {
 		//渲染循环
 		glfwSwapBuffers(window);
@@ -169,13 +177,7 @@ void T::GameWindow::OnCreate()
 		glfwMakeContextCurrent(window);
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glClear(GL_COLOR_BUFFER_BIT);
-		texture[0] = load_texture("2.bmp");
-		texture[1] = load_texture("duck.bmp");
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//S方向上的贴图模式
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//T方向
-		//event_update.trigger();
+		event_update.trigger();
 		MouseClickEvent();
 		//绘制
 		ImGui::Render();
@@ -194,21 +196,12 @@ void T::GameWindow::MouseClickEvent()
 		GLfloat x, y;
 		x = io.MousePos.x;
 		y = io.MousePos.y;
-		if (x >= 400 & y >= 300) {
-			x -= 400; y = 300 - y;
-		}
-		else if (x >= 400 & y < 300) {//第一象限
-			x -= 400; y = 300 - y;
-		}
-		else if (x < 400 & y < 300) {
-			x -= 400; y = 300 - y;
-		}
-		else if (x < 400 & y > 300) {
-			x -= 400; y = 300 - y;
-		}
-		vec2 p;
-		p.x = x; p.y = y;
-		UpdataParticles(p);
+        if (y >= 50 && y <= 600) {
+            vec2 p;
+            p.x = x; p.y = y;
+            UpdataParticles(p);
+        }
+
 		//DrawCircle(x, y, 10.0f, 50, texture[0]);
 	}
 }
@@ -230,7 +223,7 @@ void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
 	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
 	for (int i = 0; i < particles.size(); i++)
 	{
-		if (particles[i].type == ParticleType::Iron)
+		if (particles[i].type != ParticleType::None)
 		{
 			float x = particles[i].position.x;
 			float y = particles[i].position.y;
