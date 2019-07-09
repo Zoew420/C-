@@ -10,7 +10,7 @@ namespace T {
     template <typename ...Args>
     class EventHandler {
     public:
-        virtual void trigger(Args... args) = 0;
+        virtual void handle(Args... args) = 0;
     };
 
     // 代表一个事件源
@@ -47,9 +47,9 @@ namespace T {
         }
 
         // 触发该事件
-        void trigger(Args... args) {
+        void handle(Args... args) {
             for (auto& h : _handlers) {
-                h->trigger(args);
+                h->handle(args);
             }
         }
     };

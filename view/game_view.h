@@ -26,7 +26,25 @@ namespace T {
         // 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
         shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
 
-		GameView();
+        class DataReadyEventHandler : public EventHandler<const vector<ParticleInfo>&> {
+            GameView* view;
+        public:
+            DataReadyEventHandler(GameView* view) : view(view) {}
+            void handle(const vector<ParticleInfo>& particles) {
+                view->Handler();
+            }
+        };
+
+        void Handler() {
+
+        }
+
+        void Test() {
+            on_data_ready = make_shared<DataReadyEventHandler>(this);
+        }
+
+
+        GameView();
 
 		void Update_Event();
 
