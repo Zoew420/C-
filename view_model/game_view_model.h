@@ -21,6 +21,9 @@ namespace T {
         }
 
     public:
+
+        GameViewModel(GameModel* model) : model(model) {};
+
         // 数据准备完毕的事件源（ViewModel通知View数据准备完毕，可以绘制）
         EventSource<const vector<ParticleInfo>&> event_data_ready;
 
