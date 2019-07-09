@@ -18,18 +18,6 @@ namespace T {
 
         StableSolver airflow_solver;
 
-        struct map_v {
-            vector<float> map_vx, map_vy;
-            map_v(int n_map) :map_vx(n_map), map_vy(n_map) {};
-        };
-
-
-        struct AirFlowState {
-            vector<float> px, py, div, p;
-            PingPong<map_v>mapv;
-            AirFlowState(int n_map) : mapv(n_map, n_map), div(n_map), p(n_map), px(n_map), py(n_map) {
-            };
-        }airstate;
 
         // 记录一个像素点内全部的粒子
         struct PixelParticleList {
@@ -89,197 +77,107 @@ namespace T {
 
         int width, height;
 
-        bool in_bound(int r, int c) { return r >= 0 && r < height && c >= 0 && c < width; }
-        bool in_bound(ivec2 v) { return in_bound(v.y, v.x); }
+        bool in_bound(int c, int r) { return r >= 0 && r < height && c >= 0 && c < width; }
+        bool in_bound(ivec2 v) { return in_bound(v.x, v.y); }
         int bound_dist(ivec2 v) {
             return min({ v.x, width - 1 - v.x, v.y, height - 1 - v.y });
         }
-        int idx(int r, int c) { return r * width + c; }
-        int idx(ivec2 v) { return idx(v.y, v.x); }
+        int idx(int c, int r) { return r * width + c; }
+        int idx(ivec2 v) { return idx(v.x, v.y); }
+        int idx_air(int c, int r) { return r / K_AIRFLOW_DOWNSAMPLE * (width / K_AIRFLOW_DOWNSAMPLE) + c / K_AIRFLOW_DOWNSAMPLE; }
+        int idx_air(ivec2 v) { return idx_air(v.x, v.y); }
+
+        void prepare() {
+            state_next.reset(state_cur.particles);
+            for (int i = 0; i < state_cur.particles; i++) {
+                state_next.p_type[i] = state_cur.p_type[i];
+                state_next.p_pos[i] = state_cur.p_pos[i];
+                state_next.p_vel[i] = state_cur.p_vel[i];
+            }
+        }
+
+        vec2 safe_sample_air(ivec2 p_air) {
+            if (p_air.x < 0) p_air.x = 0;
+            if (p_air.x >= width / K_AIRFLOW_DOWNSAMPLE) p_air.x = width / K_AIRFLOW_DOWNSAMPLE - 1;
+            if (p_air.y < 0) p_air.y = 0;
+            if (p_air.y >= height / K_AIRFLOW_DOWNSAMPLE) p_air.y = height / K_AIRFLOW_DOWNSAMPLE - 1;
+            int im_air = p_air.y * (width / K_AIRFLOW_DOWNSAMPLE) + p_air.x;
+            return vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+        }
+
+        vec2 bilinear_sample_air(ivec2 pos) {
+            pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
+            ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
+            vec2 fr = glm::fract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
+            vec2 p[4] = {
+                safe_sample_air(base),
+                safe_sample_air(base + ivec2(1,0)),
+                safe_sample_air(base + ivec2(0,1)),
+                safe_sample_air(base + ivec2(1,1))
+            };
+            float w[4] = {
+                (1 - fr.x) * (1 - fr.y),
+                fr.x * (1 - fr.y),
+                (1 - fr.x) * fr.y,
+                fr.x * fr.y
+            };
+            vec2 sum = vec2();
+            for (int i = 0; i < 4; i++) {
+                sum += p[i] * w[i];
+            }
+            return sum;
+        }
 
 
         void compute_vel() {
             for (int ip = 0; ip < state_cur.particles; ip++) {
                 // get map index
-                int im = idx(f2i(state_cur.p_pos[ip]));
+                ivec2 ipos = f2i(state_cur.p_pos[ip]);
+                int im = idx(ipos);
+                int im_air = idx_air(ipos);
 
                 if (state_cur.p_type[ip] != ParticleType::Sand) continue;
-                vec2 v_air = vec2(airflow_solver.getVX()[im], airflow_solver.getVY()[im]); // air velocity
+                //vec2 v_air = vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]); // air velocity
+                vec2 v_air = bilinear_sample_air(ipos);
 
                 vec2 v_p = state_cur.p_vel[ip]; // particle velocity
                 vec2 v_rel = v_p - v_air; // relative velocity
-                float p = airflow_solver.p[im]; // air pressure
+                float p = airflow_solver.p[im_air]; // air pressure
                 p = 1;
                 float mass = particle_mass(state_cur.p_type[ip]);
+
                 vec2 f_resis = -K_AIR_RESISTANCE * p * v_rel * length(v_rel);
+                float limit = length(f_resis / mass * K_DT) / length(v_rel);
+                if (limit > 1) f_resis /= limit; // IMPORTANT: prevent numerical explosion
+
                 vec2 f_gravity = K_GRAVITY * vec2(0, 1) * mass;
                 vec2 f = f_resis + f_gravity;
                 vec2 acc = f / mass;
+
                 state_next.p_vel[ip] = state_cur.p_vel[ip] + acc * K_DT; // set velocity
             }
         }
-
-        void setBoundary(vector<float> & value, int flag)
-        {
-            if (flag != 0) {
-                for (int i = 0; i < state_cur.particles; i++) {
-                    if (state_cur.p_type[i] == ParticleType::Sand) {
-                        int im = idx(f2i(state_cur.p_pos[i]));
-                        if (flag == 1)value[im] = state_cur.p_vel[i].x;
-                        else if (flag == 2)value[im] = state_cur.p_vel[i].y;
-                    }
-                    else if (state_cur.p_type[i] == ParticleType::Iron) {
-                        int im = idx(f2i(state_cur.p_pos[i]));
-                        value[im] = 0;
-                    }
-                }
-            }
-            for (int i = 1; i < width - 1; i++) {
-                value[idx(0, i)] = value[idx(1, i)];
-                value[idx(height - 1, i)] = value[idx(height - 2, i)];
-            }
-            for (int i = 1; i < height - 1; i++) {
-                value[idx(i, 0)] = value[idx(i, 1)];
-                value[idx(i, width - 1)] = value[idx(i, width - 2)];
-            }
-            value[idx(0, 0)] = (value[idx(0, 1)] + value[idx(1, 0)]) / 2;
-            value[idx(0, width - 1)] = (value[idx(0, width - 2)] + value[idx(1, width - 1)]) / 2;
-            value[idx(height - 1, 0)] = (value[idx(height - 2, 0)] + value[idx(height - 1, 1)]) / 2;
-            value[idx(height - 1, width - 1)] = (value[idx(height - 2, width - 1)] + value[idx(height - 1, width - 2)]) / 2;
-        }
-
-
-        // diffusion(vx, vx0, diff, flag);
-        // no need
-        // diff determine the speed
-        /*
-        void diffusion(vector<float>value, vector<float>value0, float rate, int flag)
-        {
-            for (int i = 0; i < width * height; i++) value[i] = 0.0f;
-            float a = rate * dt;
-
-            for (int k = 0; k < 10; k++)
-            {
-                for (int i = 1; i <= height - 2; i++)
-                {
-                    for (int j = 1; j <= width - 2; j++)
-                    {
-                        value[idx(i, j)] = (value0[idx(i, j)] + a * (value[idx(i + 1, j)]
-                            + value[idx(i - 1, j)] + value[idx(i, j + 1)] +
-                            value[idx(i, j - 1)])) / (4.0f*a + 1.0f);
-                    }
-                }
-                setBoundary(value, flag);
-            }
-        }
-        */
-
-        void projection()
-        {
-            for (int i = 1; i <= height - 2; i++)
-            {
-                for (int j = 1; j <= width - 2; j++)
-                {
-                    airstate.div[idx(i, j)] =
-                        0.5f * (airstate.mapv.cur()->map_vx[idx(i + 1, j)] - airstate.mapv.cur()->map_vx[idx(i - 1, j)]
-                            + airstate.mapv.cur()->map_vy[idx(i, j + 1)] - airstate.mapv.cur()->map_vy[idx(i, j - 1)]);
-                    airstate.p[idx(i, j)] = 0.0f;;
-                }
-            }
-            setBoundary(airstate.div, 0);
-            setBoundary(airstate.p, 0);
-
-            //projection iteration
-            for (int k = 0; k < 20; k++)
-            {
-                for (int i = 1; i <= height - 2; i++)
-                {
-                    for (int j = 1; j <= width - 2; j++)
-                    {
-                        airstate.p[idx(i, j)] =
-                            (airstate.p[idx(i + 1, j)] + airstate.p[idx(i - 1, j)]
-                                + airstate.p[idx(i, j + 1)] + airstate.p[idx(i, j - 1)]
-                                - airstate.div[idx(i, j)]) / 4.0f;
-                    }
-                }
-                setBoundary(airstate.p, 0);
-            }
-
-            //velocity minus grad of Pressure
-            for (int i = 1; i <= height - 2; i++)
-            {
-                for (int j = 1; j <= width - 2; j++)
-                {
-                    airstate.mapv.cur()->map_vx[idx(i, j)] -= 0.5f * (airstate.p[idx(i + 1, j)] - airstate.p[idx(i - 1, j)]);
-                    airstate.mapv.cur()->map_vy[idx(i, j)] -= 0.5f * (airstate.p[idx(i, j + 1)] - airstate.p[idx(i, j - 1)]);
-                }
-            }
-            setBoundary(airstate.mapv.cur()->map_vx, 1);
-            setBoundary(airstate.mapv.cur()->map_vy, 2);
-        }
-
-        void advection(vector<float> & value, vector<float> & value0, vector<float> & u, vector<float> & v, int flag)
-        {
-            float oldX;
-            float oldY;
-            int i0;
-            int i1;
-            int j0;
-            int j1;
-            float wL;
-            float wR;
-            float wB;
-            float wT;
-
-            for (int i = 1; i <= height - 2; i++)
-            {
-                for (int j = 1; j <= width - 2; j++)
-                {
-                    oldX = airstate.px[idx(i, j)] - u[idx(i, j)] * K_DT;
-                    oldY = airstate.py[idx(i, j)] - v[idx(i, j)] * K_DT;
-
-                    if (oldX < 1.0f) oldX = 1.0f;
-                    if (oldX > width - 1.0f) oldX = width - 1.0f;
-                    if (oldY < 1.0f) oldY = 1.0f;
-                    if (oldY > height - 1.0f) oldY = height - 1.0f;
-
-                    i0 = (int)(oldX - 0.5f);
-                    j0 = (int)(oldY - 0.5f);
-                    i1 = i0 + 1;
-                    j1 = j0 + 1;
-
-                    wL = airstate.px[idx(i1, j0)] - oldX;
-                    wR = 1.0f - wL;
-                    wB = airstate.py[idx(i0, j1)] - oldY;
-                    wT = 1.0f - wB;
-
-                    value[idx(i, j)] = wB * (wL * value0[idx(i0, j0)] + wR * value0[idx(i1, j0)]) +
-                        wT * (wL * value0[idx(i0, j1)] + wR * value0[idx(i1, j1)]);
-                }
-            }
-            setBoundary(value, flag);
-        }
-
-
 
         void compute_air_flow() {
 
             for (int i = 0; i < state_cur.particles; i++) {
                 ivec2 pos = f2i(state_cur.p_pos[i]);
                 if (bound_dist(pos) <= 2) continue;
-                int im = idx(pos);
+                int im_air = idx_air(pos);
                 if (state_cur.p_type[i] == ParticleType::Sand) {
-                    airflow_solver.getVX()[im] = state_cur.p_vel[i].x;
-                    airflow_solver.getVY()[im] = state_cur.p_vel[i].y;
+                    vec2 diff = state_cur.p_vel[i] - vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+                    airflow_solver.getVX()[im_air] += diff.x / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
+                    airflow_solver.getVY()[im_air] += diff.y / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                 }
                 else if (state_cur.p_type[i] == ParticleType::Iron) {
-                    airflow_solver.getVX()[im] = 0;
-                    airflow_solver.getVY()[im] = 0;
+                    vec2 diff = -vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+                    airflow_solver.getVX()[im_air] += diff.x / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
+                    airflow_solver.getVY()[im_air] += diff.y / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                 }
             }
 
             airflow_solver.animVel();
-            airflow_solver.vortConfinement();
+            //airflow_solver.vortConfinement();
         }
 
         struct CollisionDetectionResult {
@@ -290,16 +188,25 @@ namespace T {
         // 检测碰撞（粗糙）
         // 从从终点开始往前寻找，因此可能会穿过薄物体，但是比较快
         bool detect_collision(vec2 start, vec2 end, CollisionDetectionResult & result) {
-            int steps = length(start - end) / K_COLLISION_STEP_LENGTH;
-            vec2 delta = normalize(start - end) * K_COLLISION_STEP_LENGTH; // 步长=1
+            //int last_target = -1;
+            //vec2 final_pos = end;
+            //goto exit;
+            //float len = length(start - end);
+            //if (len == 0.0f) goto exit;
             int last_target = -1;
             vec2 final_pos = start;
+            float len = length(start - end);
+            if (len == 0.0f) goto exit;
+
+            int steps = len / K_COLLISION_STEP_LENGTH;
+            vec2 delta = normalize(start - end) * K_COLLISION_STEP_LENGTH; // 步长=1
+
+
             vec2 cur = end;
             ivec2 self = f2i(start);
 
             if (steps == 0) {
-                final_pos = end;
-                goto exit;
+                steps = 1;
             }
 
             for (int i = 0; i < steps; i++) {
@@ -329,6 +236,8 @@ namespace T {
         void compute_position() {
             // 更新位置，碰撞检测
             for (int ip = 0; ip < state_cur.particles; ip++) {
+                if (state_cur.p_type[ip] != ParticleType::Sand) continue;
+
                 vec2 v = state_cur.p_vel[ip];
                 vec2 pos_old = state_cur.p_pos[ip];
                 vec2 pos_new = pos_old + v * K_DT;
@@ -336,14 +245,22 @@ namespace T {
 
                 bool collided = detect_collision(pos_old, pos_new, c_res);
                 if (collided) {
-                    float rnd1 = rand() / float(RAND_MAX);
-                    float rnd2 = rand() / float(RAND_MAX);
-                    vec2 rnd = vec2(rnd1, rnd2) * 0.1f;
-                    // TODO: 更好的速度计算
-                    swap(state_cur.p_vel[c_res.target_index], state_next.p_vel[ip]);
-                    state_cur.p_vel[c_res.target_index] += rnd;
-                    state_next.p_vel[ip] -= rnd;
+                    ParticleType target_type = state_cur.p_type[c_res.target_index];
+                    if (target_type == ParticleType::Sand) {
+                        float rnd1 = rand() / float(RAND_MAX);
+                        float rnd2 = rand() / float(RAND_MAX);
+                        vec2 rnd = vec2(rnd1, rnd2) * 0.1f;
+                        // TODO: 更好的速度计算
+                        swap(state_next.p_vel[c_res.target_index], state_next.p_vel[ip]);
+                        state_next.p_vel[c_res.target_index] += rnd;
+                        state_next.p_vel[ip] -= rnd;
+                    }
+                    else if (target_type == ParticleType::Iron) {
+                        state_next.p_vel[ip] = vec2();
+                    }
                 }
+
+                //c_res.pos = state_next.p_pos[ip] + vec2(0, 1);
                 state_next.p_pos[ip] = c_res.pos;
 
                 ivec2 coord = f2i(c_res.pos);
@@ -360,10 +277,9 @@ namespace T {
 
         // 完成StateNext的所有计算，将结果收集到StateCur中
         void complete() {
-            int n_next = state_next.particles;
             reorder_buf.p_idx.clear();
             reorder_buf.sort.clear();
-            for (int ip = 0; ip < n_next; ip++) {
+            for (int ip = 0; ip < state_next.particles; ip++) {
                 reorder_buf.p_idx.push_back(idx(f2i(state_next.p_pos[ip])));
                 if (state_next.p_type[ip] != ParticleType::None) {
                     reorder_buf.sort.push_back(ip);
@@ -371,7 +287,7 @@ namespace T {
             }
 
             vector<int>& p_idx = reorder_buf.p_idx;
-            sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] < p_idx[i2]; });
+            sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] > p_idx[i2]; });
 
             int n_new = reorder_buf.sort.size();
             // 使用刚才的StateNext，生成下一个StateCur
@@ -389,7 +305,6 @@ namespace T {
                 cur_lst.append(ip);
             }
 
-            state_next.reset(n_new);
         }
 
         ParticleBrush cur_brush;
@@ -415,12 +330,15 @@ namespace T {
         }
 
     public:
-        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next(), airstate(w * h) {
-            airflow_solver.init(h, w, K_DT);
+        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next() {
+            assert(w % K_AIRFLOW_DOWNSAMPLE == 0);
+            assert(h % K_AIRFLOW_DOWNSAMPLE == 0);
+            airflow_solver.init(h / K_AIRFLOW_DOWNSAMPLE, w / K_AIRFLOW_DOWNSAMPLE, K_DT);
             airflow_solver.reset();
         };
 
         void update() {
+            prepare();
             compute_vel();
             compute_air_flow();
             compute_position();
