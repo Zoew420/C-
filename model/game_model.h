@@ -248,6 +248,7 @@ namespace T {
             const vector<ParticleType>& type;
             const vector<vec2>& position;
         };
+
         QueryParticleResult query_particles() {
             return QueryParticleResult{ state_cur.p_type, state_cur.p_pos };
         }
