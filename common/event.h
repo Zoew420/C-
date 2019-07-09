@@ -47,7 +47,7 @@ namespace T {
         }
 
         // 触发该事件
-        void handle(Args... args) {
+        void trigger(Args... args) {
             for (auto& h : _handlers) {
                 h->handle(args);
             }
