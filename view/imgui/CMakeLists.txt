@@ -36,5 +36,6 @@ endforeach()
 
 target_link_libraries(ImGui ${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw3.lib)
 target_link_libraries(ImGui opengl32)
+target_link_libraries(ImGui GLU32)
 target_link_libraries(ImGui ${CMAKE_CURRENT_SOURCE_DIR}/lib/legacy_stdio_definitions.lib)
 target_link_libraries(ImGui ${CMAKE_CURRENT_SOURCE_DIR}/lib/glew32.lib)

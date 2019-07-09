@@ -1,3 +1,4 @@
+#pragma once
 #include "../../common/event.h"
 #include "../../common/particle.h"
 #include <vector>

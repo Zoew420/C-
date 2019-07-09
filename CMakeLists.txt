@@ -5,6 +5,9 @@ set(src
 	common/particle
 	model/game_model
 	view/game_view
+	view/game_drawParticles
+	view/ViewEventHandler/game_DataReadyEventHandle
+	view/ViewEventHandler/game_mouseclickEventHandle
 	view_model/game_view_model
 )
 
