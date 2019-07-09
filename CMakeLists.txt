@@ -26,3 +26,5 @@ foreach(tg ${targets})
 	set_property(TARGET ${tg} PROPERTY CXX_STANDARD 17)
 	target_link_libraries(${tg} ImGui)
 endforeach()
+
+set_target_properties(TestEntry PROPERTIES LINK_FLAGS "/PROFILE")

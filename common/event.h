@@ -1,9 +1,10 @@
 #pragma once
 #include <vector>
 #include <memory>
-
+#include <functional>
 namespace T {
     using namespace std;
+
 
     // 事件处理程序
     // 继承它并实现具体的处理代码
@@ -12,6 +13,21 @@ namespace T {
     public:
         virtual void handle(Args... args) = 0;
     };
+
+    template <typename... Args>
+    class LambdaEventHandler : public EventHandler<Args...> {
+        function<void(Args...)> f;
+    public:
+        LambdaEventHandler(function<void(Args...)> f) : f(move(f)) {}
+        void handle(Args... args) {
+            f(args...);
+        }
+    };
+
+    template <typename... Args>
+    inline shared_ptr<EventHandler<Args...>> function_handler(function<void(Args...)> f) {
+        return shared_ptr<EventHandler<Args...>>(new LambdaEventHandler<Args...>(f));
+    }
 
     // 代表一个事件源
     template <typename ...Args>
@@ -52,5 +68,11 @@ namespace T {
                 h->handle(args);
             }
         }
+    };
+
+
+    template <typename F, typename ...Args>
+    inline shared_ptr<EventHandler<Args...>> create_function_handler() {
+
     };
 }
