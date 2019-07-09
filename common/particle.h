@@ -14,7 +14,7 @@ namespace T {
     };
 
     inline float particle_mass(ParticleType type) {
-        return 1.;
+        return 0.1;
     }
 
     //// Á£×Ó»ùÀà

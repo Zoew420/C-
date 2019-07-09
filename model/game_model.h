@@ -88,10 +88,12 @@ namespace T {
 
 
         int width, height;
-        float dt = 0.1;
 
         bool in_bound(int r, int c) { return r >= 0 && r < height && c >= 0 && c < width; }
         bool in_bound(ivec2 v) { return in_bound(v.y, v.x); }
+        int bound_dist(ivec2 v) {
+            return min({ v.x, width - 1 - v.x, v.y, height - 1 - v.y });
+        }
         int idx(int r, int c) { return r * width + c; }
         int idx(ivec2 v) { return idx(v.y, v.x); }
 
@@ -102,16 +104,18 @@ namespace T {
                 int im = idx(f2i(state_cur.p_pos[ip]));
 
                 if (state_cur.p_type[ip] != ParticleType::Sand) continue;
-                vec2 v_air = vec2(); // TODO: air velocity
+                vec2 v_air = vec2(airflow_solver.getVX()[im], airflow_solver.getVY()[im]); // air velocity
+
                 vec2 v_p = state_cur.p_vel[ip]; // particle velocity
                 vec2 v_rel = v_p - v_air; // relative velocity
-                float p = 1.f; // TODO: air pressure
+                float p = airflow_solver.p[im]; // air pressure
+                p = 1;
                 float mass = particle_mass(state_cur.p_type[ip]);
                 vec2 f_resis = -K_AIR_RESISTANCE * p * v_rel * length(v_rel);
                 vec2 f_gravity = K_GRAVITY * vec2(0, 1) * mass;
                 vec2 f = f_resis + f_gravity;
                 vec2 acc = f / mass;
-                state_next.p_vel[ip] = state_cur.p_vel[ip] + acc * dt; // set velocity
+                state_next.p_vel[ip] = state_cur.p_vel[ip] + acc * K_DT; // set velocity
             }
         }
 
@@ -231,8 +235,8 @@ namespace T {
             {
                 for (int j = 1; j <= width - 2; j++)
                 {
-                    oldX = airstate.px[idx(i, j)] - u[idx(i, j)] * dt;
-                    oldY = airstate.py[idx(i, j)] - v[idx(i, j)] * dt;
+                    oldX = airstate.px[idx(i, j)] - u[idx(i, j)] * K_DT;
+                    oldY = airstate.py[idx(i, j)] - v[idx(i, j)] * K_DT;
 
                     if (oldX < 1.0f) oldX = 1.0f;
                     if (oldX > width - 1.0f) oldX = width - 1.0f;
@@ -256,15 +260,24 @@ namespace T {
             setBoundary(value, flag);
         }
 
+
+
         void compute_air_flow() {
-            //diffusion not written here
-            //projection();
 
-            //airstate.mapv.swap();
-            //advection(airstate.mapv.cur()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 1);
-            //advection(airstate.mapv.cur()->map_vy, airstate.mapv.prev()->map_vy, airstate.mapv.prev()->map_vx, airstate.mapv.prev()->map_vy, 2);
+            for (int i = 0; i < state_cur.particles; i++) {
+                ivec2 pos = f2i(state_cur.p_pos[i]);
+                if (bound_dist(pos) <= 2) continue;
+                int im = idx(pos);
+                if (state_cur.p_type[i] == ParticleType::Sand) {
+                    airflow_solver.getVX()[im] = state_cur.p_vel[i].x;
+                    airflow_solver.getVY()[im] = state_cur.p_vel[i].y;
+                }
+                else if (state_cur.p_type[i] == ParticleType::Iron) {
+                    airflow_solver.getVX()[im] = 0;
+                    airflow_solver.getVY()[im] = 0;
+                }
+            }
 
-            //projection();
             airflow_solver.animVel();
         }
 
@@ -279,9 +292,15 @@ namespace T {
             int steps = length(start - end) / K_COLLISION_STEP_LENGTH;
             vec2 delta = normalize(start - end) * K_COLLISION_STEP_LENGTH; // 步长=1
             int last_target = -1;
+            vec2 final_pos = start;
             vec2 cur = end;
             ivec2 self = f2i(start);
-            vec2 final_pos = start;
+
+            if (steps == 0) {
+                final_pos = end;
+                goto exit;
+            }
+
             for (int i = 0; i < steps; i++) {
                 ivec2 m_pos = f2i(cur);
                 bool ext = true;
@@ -311,13 +330,18 @@ namespace T {
             for (int ip = 0; ip < state_cur.particles; ip++) {
                 vec2 v = state_cur.p_vel[ip];
                 vec2 pos_old = state_cur.p_pos[ip];
-                vec2 pos_new = pos_old + v * dt;
+                vec2 pos_new = pos_old + v * K_DT;
                 CollisionDetectionResult c_res;
 
                 bool collided = detect_collision(pos_old, pos_new, c_res);
                 if (collided) {
-                    // TODO: 可以根据碰撞的粒子来进行速度计算
-                    state_next.p_vel[ip] = vec2(); // 若碰撞，设置速度为0 
+                    float rnd1 = rand() / float(RAND_MAX);
+                    float rnd2 = rand() / float(RAND_MAX);
+                    vec2 rnd = vec2(rnd1, rnd2) * 0.1f;
+                    // TODO: 更好的速度计算
+                    swap(state_cur.p_vel[c_res.target_index], state_next.p_vel[ip]);
+                    state_cur.p_vel[c_res.target_index] += rnd;
+                    state_next.p_vel[ip] -= rnd;
                 }
                 state_next.p_pos[ip] = c_res.pos;
 
@@ -391,15 +415,7 @@ namespace T {
 
     public:
         GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next(), airstate(w * h) {
-            //for (int i = 0; i < height; i++)
-            //{
-            //    for (int j = 0; j < width; j++)
-            //    {
-            //        airstate.px[idx(i, j)] = (float)j + 0.5f;
-            //        airstate.py[idx(i, j)] = (float)i + 0.5f;
-            //    }
-            //}
-            airflow_solver.init(h, w);
+            airflow_solver.init(h, w, K_DT);
             airflow_solver.reset();
         };
 
@@ -419,6 +435,7 @@ namespace T {
             const vector<ParticleType>& type;
             const vector<vec2>& position;
         };
+
         QueryParticleResult query_particles() {
             return QueryParticleResult{ state_cur.p_type, state_cur.p_pos };
         }

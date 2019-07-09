@@ -27,7 +27,7 @@ class StableSolver
 public:
     StableSolver();
     ~StableSolver();
-    void init(int r, int c);
+    void init(int r, int c, float dt);
     void reset();
     void cleanBuffer();
     void start(){ running=1; }
