@@ -20,6 +20,10 @@ int main() {
                 float pc = p / 100000  + 100;
                 my3d::Color cc = { pc,pc,pc };
                 my3d::present::set_pixel(c, r, cc);
+                if (!gm.state_cur.map_index[pos].nil()) {
+                    my3d::Color cc2 = { 255,0,0 };
+                    my3d::present::set_pixel(c, r, cc2);
+                }
             }
         }
         my3d::present::present();
