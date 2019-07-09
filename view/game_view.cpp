@@ -60,6 +60,7 @@ T::GameWindow::GameWindow() {
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
+
 }
 
 T::GameWindow::~GameWindow()
@@ -116,12 +117,19 @@ void T::GameWindow::OnCreate()
 			}
 			ImGui::End();
 		}
-		Draw();
 
 		int display_w, display_h;
 		glfwMakeContextCurrent(window);
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glClear(GL_COLOR_BUFFER_BIT);
+		texture[0] = load_texture("2.bmp");
+		texture[1] = load_texture("duck.bmp");
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);//S方向上的贴图模式
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);//T方向
+		//event_update.trigger();
+		MouseClickEvent();
 		//绘制
 		ImGui::Render();
 		glViewport(0, 0, display_w, display_h);
@@ -129,104 +137,102 @@ void T::GameWindow::OnCreate()
 	}
 }
 
-void T::GameWindow::Draw()
+void T::GameWindow::MouseClickEvent()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION_MATRIX);
+	glMatrixMode(GL_MODELVIEW);
 	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-
-	glBegin(GL_LINES);
-	GLfloat x, y;
-	x = io.MousePos.x;
-	y = io.MousePos.y;
-	if (x >= 400 & y >= 300) {
-		x -= 400; y = 300 - y;
+	if (io.MouseDownDuration[0] >= 0.0f) {
+		GLfloat x, y;
+		x = io.MousePos.x;
+		y = io.MousePos.y;
+		if (x >= 400 & y >= 300) {
+			x -= 400; y = 300 - y;
+		}
+		else if (x >= 400 & y < 300) {//第一象限
+			x -= 400; y = 300 - y;
+		}
+		else if (x < 400 & y < 300) {
+			x -= 400; y = 300 - y;
+		}
+		else if (x < 400 & y > 300) {
+			x -= 400; y = 300 - y;
+		}
+		/*vec2 p;
+		p.x = x; p.y = y;
+		mouse_click->handle(p);*/
+		DrawCircle(x, y, 10.0f, 50, texture[0]);
 	}
-	else if (x >= 400 & y < 300) {//第一象限
-		x -= 400; y = 300 - y;
-	}
-	else if (x < 400 & y < 300) {
-		x -= 400; y = 300 - y;
-	}
-	else if (x < 400 & y > 300) {
-		x -= 400; y = 300 - y;
-	}
-	DrawCircle(x, y, 1.0f, 10, texture[0]);
-	DrawCircle(x + 10, y + 10, 1.0f, 10, texture[1]);
-	glEnd();
 }
+
+//void T::GameWindow::Draw()
+//{
+//	glLoadIdentity();
+//	glMatrixMode(GL_MODELVIEW);
+//	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+//	
+//	ImGuiIO& io = ImGui::GetIO();
+//	GLfloat x, y;
+//	x = io.MousePos.x;
+//	y = io.MousePos.y;
+//	if (x >= 400 & y >= 300) {
+//		x -= 400; y = 300 - y;
+//	}
+//	else if (x >= 400 & y < 300) {//第一象限
+//		x -= 400; y = 300 - y;
+//	}
+//	else if (x < 400 & y < 300) {
+//		x -= 400; y = 300 - y;
+//	}
+//	else if (x < 400 & y > 300) {
+//		x -= 400; y = 300 - y;
+//	}
+//	DrawCircle(0.0, 0.0, 1.0f, 50, texture[0]);
+//}
 
 T::GameView::GameView()
 {
-	texture[0] = load_texture("1.bmp");
-	texture[1] = load_texture("2.bmp");
+	Draw_Iron = false;
+	Draw_Sand = false;
 	on_data_ready = make_shared<DataReadyEventHandler>(this);
+	mouse_click = make_shared<MouseclickEventHandle>(this);
 }
 
-void T::GameView::Handler(const vector<ParticleInfo>& particles)
+void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
 {
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
 	for (int i = 0; i < particles.size(); i++)
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION_MATRIX);
-		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
 		if (particles[i].type == ParticleType::Iron)
 		{
 			float x = particles[i].position.x;
 			float y = particles[i].position.y;
+			if (x >= 400 & y >= 300) {
+				x -= 400; y = 300 - y;
+			}
+			else if (x >= 400 & y < 300) {//第一象限
+				x -= 400; y = 300 - y;
+			}
+			else if (x < 400 & y < 300) {
+				x -= 400; y = 300 - y;
+			}
+			else if (x < 400 & y > 300) {
+				x -= 400; y = 300 - y;
+			}
 			DrawCircle(x, y, 1.0f, 10, texture[0]);
 		}
 	}
 }
 
-void T::GameView::DrawCircle(float cx, float cy, float r, int num_segments, GLuint texName)
+void T::GameView::UpdataParticles(const glm::vec2 & point)
 {
-	GLfloat vertex[4];
-	GLfloat texcoord[2];
-
-	const GLfloat delta_angle = 2.0 * PI / num_segments;
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texName);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	glBegin(GL_TRIANGLE_FAN);
-
-	//draw the vertex at the center of the circle
-	texcoord[0] = 0.5 + cx;
-	texcoord[1] = 0.5 + cy;
-	glTexCoord2fv(texcoord);
-	vertex[0] = cx;
-	vertex[1] = cy;
-	vertex[2] = 0.0;
-	vertex[3] = 1.0;
-	glVertex4fv(vertex);
-
-	//draw the vertex on the contour of the circle   
-	for (int i = 0; i < num_segments; i++)
-	{
-		texcoord[0] = (std::cos(delta_angle * i) + 1.0) * 0.5 + cx;
-		texcoord[1] = (std::sin(delta_angle * i) + 1.0) * 0.5 + cy;
-		glTexCoord2fv(texcoord);
-
-		vertex[0] = std::cos(delta_angle * i) * r + cx;
-		vertex[1] = std::sin(delta_angle * i) * r + cy;
-		vertex[2] = 0.0;
-		vertex[3] = 1.0;
-		glVertex4fv(vertex);
-	}
-	texcoord[0] = (1.0 + 1.0) * 0.5 + cx;
-	texcoord[1] = (0.0 + 1.0) * 0.5 + cy;
-	glTexCoord2fv(texcoord);
-
-	vertex[0] = 1.0 * r + cx;
-	vertex[1] = 0.0 * r + cy;
-	vertex[2] = 0.0;
-	vertex[3] = 1.0;
-	glVertex4fv(vertex);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
+	ParticleBrush b;
+	if (Draw_Iron) b.type = ParticleType::Iron;
+	else if (Draw_Sand) b.type = ParticleType::Sand;
+	b.radius = 3.0f;
+	b.center = point;
+	event_new_particles.trigger(b);
 }
-

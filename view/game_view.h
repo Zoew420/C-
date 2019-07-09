@@ -7,13 +7,11 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "imgui/glew/GL/glew.h"
 #include "imgui/glfw/include/GLFW/glfw3.h"
-#include "ViewEventHandler/DataReadyEventHandle.h"
-#include "loadBrushTexture.h"
+#include "ViewEventHandler/game_DataReadyEventHandle.h"
+#include "ViewEventHandler/game_mouseclickEventHandle.h"
+#include "game_drawParticles.h"
 #include <iostream>
 #include <vector>
-#define PI       3.14159265358979323846
-/*Iron和Sand画笔的纹理*/
-GLuint texture[1];
 
 namespace T {
     using namespace std;
@@ -21,8 +19,10 @@ namespace T {
     class GameView {
     public:
 		/*绘制沙子与绘制固体的bool值*/
-		bool Draw_Sand = false;
-		bool Draw_Iron = false;
+		bool Draw_Sand;
+		bool Draw_Iron;
+		/*Iron和Sand画笔的纹理*/
+		GLuint texture[1];
 
         // 更新事件源（View通知ViewModel进行逻辑更新）
         EventSource<> event_update;
@@ -33,11 +33,15 @@ namespace T {
         // 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
         shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
 
-        GameView();
+		//鼠标点击时的处理函数
+		shared_ptr<EventHandler<const vec2 &>> mouse_click;
+		
+		GameView();
 
 		void Handler(const vector<ParticleInfo>& particles);
 
-		void DrawCircle(float cx, float cy, float r, int num_segments, GLuint texName);
+		void UpdataParticles(const vec2& point);
+
     };
 
 	class GameWindow :public GameView{
@@ -46,6 +50,7 @@ namespace T {
 		GameWindow();
 		~GameWindow();
 		void OnCreate();
-		void Draw();
+		void MouseClickEvent();
+		/*void Draw();*/
 	};
 }
