@@ -1,4 +1,4 @@
-#include "game_DataReadyEventHandle.h"
+#include "data_ready.h"
 #include "../game_view.h"
 
 namespace T {

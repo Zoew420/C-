@@ -7,8 +7,8 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "imgui/glew/GL/glew.h"
 #include "imgui/glfw/include/GLFW/glfw3.h"
-#include "ViewEventHandler/game_DataReadyEventHandle.h"
-#include "game_drawParticles.h"
+#include "event_handler/data_ready.h"
+#include "draw_particle.h"
 #include <iostream>
 #include <vector>
 

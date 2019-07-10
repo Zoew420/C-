@@ -56,11 +56,11 @@ TEST_CASE(model_simplistic_test) {
         //    cout << endl;
         //}
 
-        for (int r = 0; r < msize; r++) {
-            for (int c = 0; c < msize; c++) {
-                cout << gm.airstate.p[gm.idx(r, c)];
-            }
-            cout << endl;
-        }
+        //for (int r = 0; r < msize; r++) {
+        //    for (int c = 0; c < msize; c++) {
+        //        cout << gm.airstate.p[gm.idx(r, c)];
+        //    }
+        //    cout << endl;
+        //}
     }
 }

@@ -56,6 +56,7 @@ StableSolver::~StableSolver()
 
 void StableSolver::init(int r, int c, float dt)
 {
+
     rowSize = r;
     colSize = c;
     totSize = rowSize * colSize;
@@ -72,6 +73,7 @@ void StableSolver::init(int r, int c, float dt)
     diff = 0.0f;
     vorticity = 0.0f;
     timeStep = dt;
+
 
     vx = (float*)malloc(sizeof(float) * totSize);
     vy = (float*)malloc(sizeof(float) * totSize);
@@ -163,7 +165,7 @@ void StableSolver::projection()
     setBoundary(p, 0);
 
     //projection iteration
-    for (int k = 0; k < 10; k++)
+    for (int k = 0; k < 20; k++)
     {
         for (int i = 1; i <= rowSize - 2; i++)
         {
@@ -236,7 +238,7 @@ void StableSolver::diffusion(float* value, float* value0, float rate, int flag)
     for (int i = 0; i < totSize; i++) value[i] = 0.0f;
     float a = rate * timeStep;
 
-    for (int k = 0; k < 20; k++)
+    for (int k = 0; k < 2; k++)
     {
         for (int i = 1; i <= rowSize - 2; i++)
         {

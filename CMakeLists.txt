@@ -6,8 +6,8 @@ set(src
 	model/game_model
 	model/GridStableSolver
 	view/game_view
-	view/game_drawParticles
-	view/ViewEventHandler/game_DataReadyEventHandle
+	view/draw_particle
+	view/event_handler/data_ready
 	view_model/game_view_model
 )
 
