@@ -15,7 +15,7 @@ namespace T {
             data_buffer.clear();
             auto result = model->query_particles();
             for (int i = 0; i < result.position.size(); i++) {
-                data_buffer.push_back(ParticleInfo{ result.type[i],result.position[i] });
+                data_buffer.push_back(ParticleInfo{ result.type[i],result.position[i],result.temperature[i] });
             }
             event_data_ready.trigger(data_buffer);
         }

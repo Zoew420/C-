@@ -20,10 +20,15 @@ namespace T {
 		/*绘制沙子与绘制固体的bool值*/
 		bool draw_sand;
 		bool draw_iron;
+		bool draw_water;
 		/*画笔大小的选择*/
 		bool brush_1pix;
 		bool brush_5pix;
 		bool brush_10pix;
+		/*画笔功能的选择*/
+		bool draw;
+		bool inc_heat;
+		bool dec_heat;
 		/*Iron和Sand画笔的纹理*/
 		GLuint texture[2];
 
@@ -45,6 +50,7 @@ namespace T {
 
 		void UpdataParticles(const vec2& point);
 
+		void UpdataParticlesHeat(const vec2& point);
     };
 
 	class GameWindow :public GameView{

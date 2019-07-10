@@ -91,6 +91,7 @@ void T::GameWindow::OnCreate()
 {
 	bool show_state_choice = true;
 	bool show_brush_choice = true;
+	bool show_brush_func = true;
 	bool show_mouse_state = true;
 	bool exit_button = true;
 
@@ -105,46 +106,81 @@ void T::GameWindow::OnCreate()
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		if (show_state_choice) {
-			ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Appearing);
-			ImGui::Begin("State Choose:", &show_state_choice, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Text("State Choose:");
-			ImGui::SameLine(); HelpMarker("Once can only choose one state to draw");
-			ImGui::CheckboxFlags("Sand", (unsigned int*)&draw_sand, 1); ImGui::SameLine(150);
-			if (draw_sand == true) draw_iron = false;
-			ImGui::CheckboxFlags("Iron", (unsigned int*)&draw_iron, 1); 
-			if (draw_iron == true) draw_sand = false;
-			ImGui::End();
-		}
-		if (show_brush_choice) {
-			ImGui::SetNextWindowPos(ImVec2(300, 0), ImGuiCond_Appearing);
-			ImGui::Begin("Brush Choose:", &show_brush_choice, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Text("Brush Choose:");
-			ImGui::SameLine(); HelpMarker("Once can only choose one brush to draw");
-			ImGui::CheckboxFlags("1 pix", (unsigned int*)&brush_1pix, 1); ImGui::SameLine(150);
-			if (brush_1pix == true) {
-				brush_5pix = false;
-				brush_10pix = false;
-			}
-			ImGui::CheckboxFlags("5 pix", (unsigned int*)&brush_5pix, 1); ImGui::SameLine(300);
-			if (brush_5pix == true) {
-				brush_1pix = false;
-				brush_10pix = false;
-			}
-			ImGui::CheckboxFlags("10 pix", (unsigned int*)&brush_10pix, 1); 
-			if (brush_10pix == true) {
-				brush_1pix = false;
-				brush_5pix = false;
+		bool window_flag = show_state_choice & show_brush_choice & show_brush_func;
+		if (window_flag) {
+			ImGui::SetNextWindowPos(ImVec2(0, 5), ImGuiCond_Appearing);
+			ImGui::Begin("Brush Function Choose:", &window_flag, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu("Brush Type Choose"))
+				{
+					ImGui::CheckboxFlags("Sand", (unsigned int*)&draw_sand, 1); ImGui::SameLine(150);
+					if (draw_sand == true)
+					{
+						draw_iron = false;
+						draw_water = false;
+					}
+					ImGui::CheckboxFlags("Iron", (unsigned int*)&draw_iron, 1); ImGui::SameLine(300);
+					if (draw_iron == true) 
+					{
+						draw_sand = false;
+						draw_water = false;
+					}
+					ImGui::CheckboxFlags("Water", (unsigned int*)&draw_water, 1);
+					if (draw_water == true)
+					{
+						draw_iron = false;
+						draw_sand = false;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::SameLine(150);
+				if (ImGui::BeginMenu("Brush Size Choose"))
+				{
+					ImGui::CheckboxFlags("1 pix", (unsigned int*)&brush_1pix, 1); ImGui::SameLine(150);
+					if (brush_1pix == true) {
+						brush_5pix = false;
+						brush_10pix = false;
+					}
+					ImGui::CheckboxFlags("5 pix", (unsigned int*)&brush_5pix, 1); ImGui::SameLine(300);
+					if (brush_5pix == true) {
+						brush_1pix = false;
+						brush_10pix = false;
+					}
+					ImGui::CheckboxFlags("10 pix", (unsigned int*)&brush_10pix, 1);
+					if (brush_10pix == true) {
+						brush_1pix = false;
+						brush_5pix = false;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::SameLine(300);
+				if (ImGui::BeginMenu("Brush Function Choose"))
+				{
+					ImGui::CheckboxFlags("Painting Pen", (unsigned int*)&draw, 1); ImGui::SameLine(150);
+					if (draw == true) {
+						inc_heat = false;
+						dec_heat = false;
+					}
+					ImGui::CheckboxFlags("Increase Heat", (unsigned int*)&inc_heat, 1); ImGui::SameLine(300);
+					if (inc_heat == true) {
+						draw = false;
+						dec_heat = false;
+					}
+					ImGui::CheckboxFlags("Decrease Heat", (unsigned int*)&dec_heat, 1);
+					if (dec_heat == true) {
+						draw = false;
+						dec_heat = false;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::SameLine(745);
+				if (ImGui::BeginMenu("Exit")) exit(0);
+				ImGui::EndMenuBar();
 			}
 			ImGui::End();
 		}
 
-		if (exit_button) {
-			ImGui::SetNextWindowPos(ImVec2(750, 0), ImGuiCond_Appearing);
-			ImGui::Begin("exit button", &exit_button, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Button("Exit");
-			ImGui::End();
-		}
 
 		if (show_mouse_state) {
 			ImGui::SetNextWindowPos(ImVec2(475, 580), ImGuiCond_Appearing);
@@ -155,13 +191,11 @@ void T::GameWindow::OnCreate()
 			{
 				ImGui::SameLine();
 				ImGui::Text("(%.02f secs)", io.MouseDownDuration[0]);
-				if (io.MousePos.x >= 760 && io.MousePos.x < 800 && io.MousePos.y >= 5 && io.MousePos.y <= 25) exit(0);
 			}
 			else {
 				ImGui::SameLine();
 				ImGui::Text("(0 secs)");
 			}
-
 			ImGui::End();
 		}
 
@@ -191,7 +225,8 @@ void T::GameWindow::MouseClickEvent()
         if (y >= 50 && y <= 600) {
             vec2 p;
             p.x = x; p.y = y;
-            UpdataParticles(p);
+			if(draw == true)  UpdataParticles(p);
+			else UpdataParticlesHeat(p);
         }
 	}
 }
@@ -200,9 +235,13 @@ T::GameView::GameView()
 {
 	draw_iron = false;
 	draw_sand = false;
+	draw_water = false;
 	brush_1pix = false;
 	brush_5pix = true;
 	brush_10pix = false;
+	draw = true;
+	inc_heat = false;
+	dec_heat = false;
 	on_data_ready = make_shared<DataReadyEventHandler>(this);
 }
 
@@ -219,11 +258,15 @@ void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
 		x -= 400; y = 300 - y;
 		if (particles[i].type == ParticleType::Iron)
 		{
-			DrawCircle(x, y, 1.0f, int(ParticleType::Iron));
+			DrawPaticle(x, y, 1.0f, int(ParticleType::Iron));
 		}
 		else if (particles[i].type == ParticleType::Sand)
 		{
-			DrawCircle(x, y, 1.0f, int(ParticleType::Sand));
+			DrawPaticle(x, y, 1.0f, int(ParticleType::Sand));
+		}
+		else if (particles[i].type == ParticleType::Water) 
+		{
+			DrawPaticle(x, y, 1.0f, int(ParticleType::Water));
 		}
 	}
 }
@@ -233,9 +276,22 @@ void T::GameView::UpdataParticles(const glm::vec2 & point)
 	ParticleBrush b;
 	if (draw_iron) b.type = ParticleType::Iron;
 	else if (draw_sand) b.type = ParticleType::Sand;
+	else if (draw_water) b.type = ParticleType::Water;
 	if (brush_1pix) b.radius = 1.0f;
 	else if (brush_5pix) b.radius = 5.0f;
 	else if (brush_10pix) b.radius = 10.0f;
 	b.center = point;
 	event_new_particles.trigger(b);
+}
+
+void T::GameView::UpdataParticlesHeat(const glm::vec2 & point)
+{
+	HeatBrush h;
+	if (brush_1pix) h.radius = 1.0f;
+	else if (brush_5pix) h.radius = 5.0f;
+	else if (brush_10pix) h.radius = 10.0f;
+	h.center = point;
+	if (inc_heat == true) h.increase = true;
+	else if (dec_heat == true) h.increase = false;
+	event_change_heat.trigger(h);
 }

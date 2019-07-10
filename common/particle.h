@@ -19,11 +19,23 @@ namespace T {
         return particle_mass_lut[int(type)];
     }
 
+	inline float particle_diff(ParticleType type) {
+		if (type == ParticleType::Iron) {
+			return 2.2 / 100000;
+		}
+		else if (type == ParticleType::Sand) {
+			return 9.02 / 10000000;
+		}
+		else if (type == ParticleType::Water) {
+			return 2.78 / 10000000;
+		}
+	}
 
     // 粒子的简略信息，由ViewModel返回给View
     struct ParticleInfo {
         ParticleType type = ParticleType::None;
         vec2 position = vec2();
+		float temperature = 297.15f;
     };
 
 
@@ -44,6 +56,6 @@ namespace T {
     struct ParticleBrush : Brush {
         ParticleType type = ParticleType::None;
         ParticleBrush() = default;
-        ParticleBrush(vec2 center, float radius, ParticleType type) : Brush(center, radius), type(type) {}
+        ParticleBrush(vec2 center, float radius, ParticleType type) : Brush(center, radius), type(type){}
     };
 }

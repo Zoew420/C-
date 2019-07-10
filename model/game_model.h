@@ -134,10 +134,48 @@ namespace T {
         }
 
 
-        void compute_heat() {
-            // TODO:
-            // 对于每个粒子，查找其附近的粒子，计算下一帧的温度
-        }
+		float average_heat(ivec2 ipos_near) {
+			if (in_bound(ipos_near)) {//是否在画布里
+				int im1 = idx(ipos_near);//得到它在画布上的index
+				PixelParticleList &list = state_cur.map_index[im1];//找到该像素点的所有粒子编号
+				if (!list.nil()) {//该像素点不为空
+					float avg = 0.0f;
+					for (int i = list.from; i <= list.to; i++) {
+						avg += state_cur.p_heat[i];
+					}
+					avg /= (list.to - list.from);
+					return avg;
+				}
+				else {
+					return 0;
+				}
+			}
+			else {
+				return 0;
+			}
+		}
+
+
+		void compute_heat() {
+			// TODO:
+			// 对于每个粒子，查找其附近的粒子，计算下一帧的温度
+			//对于每个粒子，计算其温度简化为其自身温度和加上上下左右粒子温度差值的平均值
+			for (int ip = 0; ip < state_cur.particles; ip++) {
+				//get map index
+				ivec2 ipos = f2i(state_cur.p_pos[ip]);
+				int im = idx(ipos);
+				ivec2 ipos1 = ivec2(ipos.x, ipos.y - 1);
+				ivec2 ipos2 = ivec2(ipos.x, ipos.y + 1);
+				ivec2 ipos3 = ivec2(ipos.x - 1, ipos.y);
+				ivec2 ipos4 = ivec2(ipos.x + 1, ipos.y);
+				float t1 = average_heat(ipos1);
+				float t2 = average_heat(ipos2);
+				float t3 = average_heat(ipos3);
+				float t4 = average_heat(ipos4);
+				float delt_t = t1 + t2 + t3 + t4 - 4 * state_cur.p_heat[ip];
+				state_cur.p_heat[ip] = K_DT * particle_diff(state_cur.p_type[ip]) * delt_t + state_cur.p_heat[ip];
+			}
+		}
 
         void compute_vel() {
             compute_vel_basic();
@@ -472,10 +510,11 @@ namespace T {
         struct QueryParticleResult {
             const vector<ParticleType>& type;
             const vector<vec2>& position;
+			const vector<float>& temperature;
         };
 
         QueryParticleResult query_particles() {
-            return QueryParticleResult{ state_cur.p_type, state_cur.p_pos };
+            return QueryParticleResult{ state_cur.p_type, state_cur.p_pos, state_cur.p_heat};
         }
     };
 }
