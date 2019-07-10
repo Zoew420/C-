@@ -224,13 +224,13 @@ namespace T {
         } liquid_buf;
 
         template<typename F>
-        void iterate_neighbor_particles(ivec2 pos, int r_neibor, F f) {
+        void iterate_neighbor_particles(ivec2 pos, int r_neibor, F & f) {
             for (int dx = -r_neibor; dx <= r_neibor; dx++) {
                 for (int dy = -r_neibor; dy <= r_neibor; dy++) {
                     ivec2 n_pos = pos + ivec2(dx, dy);
                     if (!in_bound(n_pos)) continue;
                     if (dx * dx + dy * dy > r_neibor * r_neibor) continue;
-                    PixelParticleList& lst = state_cur.map_index[idx(n_pos)];
+                    PixelParticleList & lst = state_cur.map_index[idx(n_pos)];
                     if (!lst.nil()) {
                         for (int t_ip = lst.from; t_ip <= lst.to; t_ip++) {
                             f(t_ip);
@@ -240,18 +240,19 @@ namespace T {
             }
         }
 
+
         void compute_vel_liquid() {
             // 1. 所有粒子计算SPH应力（优化：液体附近粒子）
             // 2. 各个粒子加速度累加到state_next上
             int r_neibor = f2i(ceilf(H));
-
             liquid_buf.reset(0);
             int il = 0;
             for (int ip = 0; ip < state_cur.particles; ip++) {
                 if (state_cur.p_type[ip] == ParticleType::Water) {
-                    ivec2 pos = state_cur.p_pos[ip];
+                    ivec2 pos = f2i(state_cur.p_pos[ip]);
                     float p = 0, rho = 0; // 计算p、rho
-                    iterate_neighbor_particles(pos, r_neibor, [this, &p, &rho, ip](int t_ip) {
+                    iterate_neighbor_particles(pos, r_neibor, [this, &p, &rho, &ip](int t_ip) {
+                        if (this->state_cur.p_type[t_ip] != ParticleType::Water) return;
                         vec2 pos_diff = this->state_cur.p_pos[t_ip] - this->state_cur.p_pos[ip];
                         float r2 = dot(pos_diff, pos_diff);
                         if (r2 < HSQ) {
@@ -260,18 +261,20 @@ namespace T {
                         }
                     });
                     p = GAS_CONST * (rho - REST_DENS);
-                    liquid_buf.idx_mapping.push_back(ip);
+                    liquid_buf.idx_mapping.push_back(il);
                     liquid_buf.p.push_back(p);
                     liquid_buf.rho.push_back(rho);
                     il++;
                 }
+                else {
+                    liquid_buf.idx_mapping.push_back(-1);
+                }
             }
 
-
             for (int ip = 0; ip < state_cur.particles; ip++) {
-                ivec2 pos = state_cur.p_pos[ip];
+                ivec2 pos = f2i(state_cur.p_pos[ip]);
                 float mass = particle_mass(state_cur.p_type[ip]);
-                iterate_neighbor_particles(pos, r_neibor, [this, mass, ip](int t_ip) {
+                iterate_neighbor_particles(pos, r_neibor, [this, mass, &ip](int t_ip) {
                     vec2 f_press = vec2();
                     vec2 f_visc = vec2();
                     if (t_ip == ip) return;
@@ -281,20 +284,23 @@ namespace T {
                     vec2 vel_diff = this->state_cur.p_vel[t_ip] - this->state_cur.p_vel[ip];
                     float t_mass = particle_mass(this->state_cur.p_type[t_ip]);
                     float r = length(pos_diff);
-
+                    if (r <= EPS) {
+                        // 防止normalize零向量
+                        // 此处随机给一个方向
+                        pos_diff = vec2(random(-1, 1), random(-1, 1));
+                    }
                     if (r < H)
                     {
-                        int il = liquid_buf.idx_mapping[ip];
                         int t_il = liquid_buf.idx_mapping[t_ip];
-
                         // compute pressure force contribution
                         f_press += -normalize(pos_diff) * t_mass * liquid_buf.p[t_il] / liquid_buf.rho[t_il] * SPIKY_GRAD * pow(H - r, 2.f);
                         //// compute viscosity force contribution
-                        f_visc += VISC * t_mass * vel_diff / liquid_buf.rho[t_il] * VISC_LAP * (H - r);
-                    
+                        f_visc += VISC * t_mass * vel_diff / (liquid_buf.rho[t_il]) * VISC_LAP * (H - r);
+
                         vec2 f = f_press + f_visc;
-                        vec2 acc;
-                        if (this->state_next.p_type[ip] == ParticleType::Water) {
+                        vec2 acc = vec2();
+                        if (this->state_cur.p_type[ip] == ParticleType::Water) {
+                            int il = liquid_buf.idx_mapping[ip];
                             acc = f / liquid_buf.rho[il];
                         }
                         else {
@@ -337,7 +343,7 @@ namespace T {
 
         // 检测碰撞（粗糙）
         // 从从终点开始往前寻找，因此可能会穿过薄物体，但是比较快
-        bool detect_collision(vec2 start, vec2 end, CollisionDetectionResult & result) {
+        bool detect_collision(vec2 start, vec2 end, bool ignore_liquid, CollisionDetectionResult & result) {
             //int last_target = -1;
             //vec2 final_pos = end;
             //goto exit;
@@ -367,8 +373,13 @@ namespace T {
                     if (lst.nil() || self == m_pos) {
                     }
                     else {
-                        ext = false;
-                        last_target = random_sample(lst.from, lst.to);
+                        int t = random_sample(lst.from, lst.to);
+                        if (state_cur.p_type[t] == ParticleType::Water && ignore_liquid) {
+                        }
+                        else {
+                            ext = false;
+                            last_target = t;
+                        }
                     }
                 }
                 if (ext) {
@@ -386,17 +397,20 @@ namespace T {
         void compute_position() {
             // 更新位置，碰撞检测
             for (int ip = 0; ip < state_cur.particles; ip++) {
-                if (state_cur.p_type[ip] != ParticleType::Sand) continue;
+                ParticleType cur_type = state_cur.p_type[ip];
+                if (cur_type == ParticleType::Iron) continue;
 
                 vec2 v = state_cur.p_vel[ip];
                 vec2 pos_old = state_cur.p_pos[ip];
                 vec2 pos_new = pos_old + v * K_DT;
                 CollisionDetectionResult c_res;
 
-                bool collided = detect_collision(pos_old, pos_new, c_res);
+
+                bool collided = detect_collision(pos_old, pos_new, cur_type == ParticleType::Water, c_res);
                 if (collided) {
                     ParticleType target_type = state_cur.p_type[c_res.target_index];
-                    if (target_type == ParticleType::Sand) {
+
+                    if (target_type != ParticleType::Iron) {
                         float rnd1 = rand() / float(RAND_MAX);
                         float rnd2 = rand() / float(RAND_MAX);
                         vec2 rnd = vec2(rnd1, rnd2) * 0.1f;
@@ -406,11 +420,12 @@ namespace T {
                         state_next.p_vel[ip] -= rnd;
                     }
                     else if (target_type == ParticleType::Iron) {
-                        state_next.p_vel[ip] = vec2();
+                        // DIRTY HACK HERE
+                        // TODO: REMOVE IT
+                        state_next.p_vel[ip] = -0.5f * state_next.p_vel[ip];
                     }
                 }
 
-                //c_res.pos = state_next.p_pos[ip] + vec2(0, 1);
                 state_next.p_pos[ip] = c_res.pos;
 
                 ivec2 coord = f2i(c_res.pos);
@@ -430,14 +445,18 @@ namespace T {
             reorder_buf.p_idx.clear();
             reorder_buf.sort.clear();
             for (int ip = 0; ip < state_next.particles; ip++) {
-                reorder_buf.p_idx.push_back(idx(f2i(state_next.p_pos[ip])));
+                ivec2 pos = f2i(state_next.p_pos[ip]);
+                if (pos == ivec2(35, 28)) {
+                    int a = 1;
+                }
+                reorder_buf.p_idx.push_back(idx(pos));
                 if (state_next.p_type[ip] != ParticleType::None) {
                     reorder_buf.sort.push_back(ip);
                 }
             }
 
             vector<int>& p_idx = reorder_buf.p_idx;
-            sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] > p_idx[i2]; });
+            sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] < p_idx[i2]; });
 
             int n_new = reorder_buf.sort.size();
             // 使用刚才的StateNext，生成下一个StateCur
@@ -445,6 +464,9 @@ namespace T {
             state_cur.reset(n_new);
             for (int ip = 0; ip < n_new; ip++) {
                 int old_ip = reorder_buf.sort[ip];
+                if (old_ip == 59) {
+                    int a = 1;
+                }
                 // 复制数据
                 vec2 pos = state_next.p_pos[old_ip];
                 state_cur.p_pos[ip] = pos;
@@ -469,7 +491,8 @@ namespace T {
                         if (in_bound(x, y) && glm::distance(vec2(x, y), cur_brush.center) <= cur_brush.radius) {
                             if (state_cur.map_index[idx(ivec2(x, y))].nil()) {
                                 state_next.particles++;
-                                state_next.p_pos.push_back(vec2(x, y));
+                                vec2 jitter = vec2(random(-1, 1)) * 0.05f;
+                                state_next.p_pos.push_back(vec2(x, y) + jitter);
                                 state_next.p_type.push_back(cur_brush.type);
                                 state_next.p_vel.push_back(vec2());
                                 state_next.p_heat.push_back(0);
