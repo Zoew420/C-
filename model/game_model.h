@@ -465,6 +465,10 @@ namespace T {
             cur_brush = brush;
         }
 
+        void set_heat(HeatBrush brush) {
+            // TODO
+        }
+
         struct QueryParticleResult {
             const vector<ParticleType>& type;
             const vector<vec2>& position;

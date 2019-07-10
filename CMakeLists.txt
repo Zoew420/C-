@@ -5,7 +5,6 @@ set(src
 	common/particle
 	model/game_model
 	model/air_solver
-	model/liquid_solver
 	view/game_view
 	view/draw_particle
 	view/event_handler/data_ready

@@ -39,6 +39,12 @@ namespace T {
             [this](ParticleBrush brush) {
             this->model->set_new_particles(brush);
         }));
+
+        // 改变温度事件处理程序
+        shared_ptr<EventHandler<HeatBrush>> on_change_heat = function_handler(function(
+            [this](HeatBrush brush) {
+            this->model->set_heat(brush);
+        }));
     };
 
 }

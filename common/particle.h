@@ -28,26 +28,22 @@ namespace T {
 
 
     struct Brush {
-        enum class Type {
-            Heat,
-            Particle
-        };
-        virtual Type type() = 0;
+        vec2 center = vec2();
+        float radius = 0;
+        Brush() = default;
+        Brush(vec2 center, float radius) : center(center), radius(radius) {};
     };
 
     struct HeatBrush : Brush {
-
-        virtual Type type() { return Type::Heat; }
+        bool increase = true;
+        HeatBrush() = default;
+        HeatBrush(vec2 center, float radius, bool increase) : Brush(center, radius), increase(increase) {}
     };
 
     // 新增粒子的笔刷
     struct ParticleBrush : Brush {
-        vec2 center;
-        float radius;
-        float heat;
         ParticleType type = ParticleType::None;
         ParticleBrush() = default;
-        ParticleBrush(vec2 center, float radius, ParticleType type, float heat = 0.f) : center(center), radius(radius), type(type), heat(heat) {}
-        virtual Type type() { return Type::Particle; }
+        ParticleBrush(vec2 center, float radius, ParticleType type) : Brush(center, radius), type(type) {}
     };
 }
