@@ -49,6 +49,7 @@ namespace T {
             int particles = 0;
             vector<PixelParticleList> map_index; // 画布某个位置的粒子下标 map_index[idx(r,c)]
             vector<ParticleType> p_type;
+            vector<float> p_heat;
             vector<vec2> p_pos, p_vel;
             StateCur(int n_map) : map_index(n_map) {}
             void reset(int n) {
@@ -65,6 +66,7 @@ namespace T {
         struct StateNext {
             int particles = 0;
             vector<ParticleType> p_type;
+            vector<float> p_heat;
             vector<vec2> p_pos, p_vel;
             void reset(int n) {
                 particles = n;
@@ -93,6 +95,7 @@ namespace T {
                 state_next.p_type[i] = state_cur.p_type[i];
                 state_next.p_pos[i] = state_cur.p_pos[i];
                 state_next.p_vel[i] = state_cur.p_vel[i];
+                state_next.p_heat[i] = state_next.p_heat[i];
             }
         }
 
@@ -128,6 +131,11 @@ namespace T {
             return sum;
         }
 
+
+        void compute_heat() {
+            // TODO:
+            // 对于每个粒子，查找其附近的粒子，计算下一帧的温度
+        }
 
         void compute_vel() {
             for (int ip = 0; ip < state_cur.particles; ip++) {
@@ -300,6 +308,7 @@ namespace T {
                 state_cur.p_pos[ip] = pos;
                 state_cur.p_type[ip] = state_next.p_type[old_ip];
                 state_cur.p_vel[ip] = state_next.p_vel[old_ip];
+                state_cur.p_heat[ip] = state_next.p_heat[old_ip];
                 // 构造画布索引
                 PixelParticleList& cur_lst = state_cur.map_index[idx(f2i(pos))];
                 cur_lst.append(ip);
@@ -339,6 +348,7 @@ namespace T {
 
         void update() {
             prepare();
+            compute_heat();
             compute_vel();
             compute_air_flow();
             compute_position();
