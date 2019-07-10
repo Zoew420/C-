@@ -85,6 +85,7 @@ void StableSolver::init(int r, int c, float dt)
     py = (float*)malloc(sizeof(float) * totSize);
     div = (float*)malloc(sizeof(float) * totSize);
     p = (float*)malloc(sizeof(float) * totSize);
+    ptmp = (float*)malloc(sizeof(float) * totSize);
 
     //vorticity confinement
     vort = (float*)malloc(sizeof(float) * totSize);

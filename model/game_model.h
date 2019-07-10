@@ -153,7 +153,7 @@ namespace T {
                 vec2 v_p = state_cur.p_vel[ip]; // particle velocity
                 vec2 v_rel = v_p - v_air; // relative velocity
                 float p = airflow_solver.p[im_air]; // air pressure
-                p = 1;
+                p = glm::max(0.f, 1 + p / 5);
                 float mass = particle_mass(state_cur.p_type[ip]);
 
                 vec2 f_resis = -K_AIR_RESISTANCE * p * v_rel * length(v_rel);
@@ -353,8 +353,8 @@ namespace T {
             prepare();
             compute_heat();
             compute_vel();
-            compute_air_flow();
             compute_position();
+            compute_air_flow();
             handle_new_particles();
             complete();
         }

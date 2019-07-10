@@ -94,7 +94,7 @@ public:
     float *px;
     float *py;
     float *div;
-    float *p;
+    float *p, *ptmp;
     //vorticity confinement
     float *vort;
     float *absVort;
