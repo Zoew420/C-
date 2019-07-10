@@ -57,6 +57,7 @@ namespace T {
                 p_type.resize(n);
                 p_pos.resize(n);
                 p_vel.resize(n);
+                p_heat.resize(n);
                 for (auto& lst : map_index) {
                     lst = PixelParticleList();
                 }
@@ -73,6 +74,7 @@ namespace T {
                 p_type.resize(n);
                 p_pos.resize(n);
                 p_vel.resize(n);
+                p_heat.resize(n);
             }
         } state_next;
 
