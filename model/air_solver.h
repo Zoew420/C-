@@ -22,11 +22,11 @@
 #ifndef __GRIDSTABLESOLVER_H__
 #define __GRIDSTABLESOLVER_H__
 
-class StableSolver
+class AirSolver
 {
 public:
-    StableSolver();
-    ~StableSolver();
+    AirSolver();
+    ~AirSolver();
     void init(int r, int c, float dt);
     void reset();
     void cleanBuffer();

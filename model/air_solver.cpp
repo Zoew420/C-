@@ -19,7 +19,7 @@
  ** Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "GridStableSolver.h"
+#include "air_solver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,11 +27,11 @@
 
 #define SWAP(value0,value) {float *tmp=value0;value0=value;value=tmp;}
 
-StableSolver::StableSolver()
+AirSolver::AirSolver()
 {
 }
 
-StableSolver::~StableSolver()
+AirSolver::~AirSolver()
 {
     free(vx);
     free(vy);
@@ -54,7 +54,7 @@ StableSolver::~StableSolver()
     free(vcfy);
 }
 
-void StableSolver::init(int r, int c, float dt)
+void AirSolver::init(int r, int c, float dt)
 {
 
     rowSize = r;
@@ -106,7 +106,7 @@ void StableSolver::init(int r, int c, float dt)
     }
 }
 
-void StableSolver::reset()
+void AirSolver::reset()
 {
     for (int i = 0; i < totSize; i++)
     {
@@ -116,7 +116,7 @@ void StableSolver::reset()
     }
 }
 
-void StableSolver::cleanBuffer()
+void AirSolver::cleanBuffer()
 {
     memset(vx0, 0, sizeof(float) * totSize);
     memset(vy0, 0, sizeof(float) * totSize);
@@ -125,7 +125,7 @@ void StableSolver::cleanBuffer()
 
 
 
-void StableSolver::setBoundary(float* value, int flag)
+void AirSolver::setBoundary(float* value, int flag)
 {
     float m = 0.95;
     //for velocity along x-axis
@@ -152,7 +152,7 @@ void StableSolver::setBoundary(float* value, int flag)
 
 }
 
-void StableSolver::projection()
+void AirSolver::projection()
 {
     for (int i = 1; i <= rowSize - 2; i++)
     {
@@ -191,7 +191,7 @@ void StableSolver::projection()
     setBoundary(vy, 2);
 }
 
-void StableSolver::advection(float* value, float* value0, float* u, float* v, int flag)
+void AirSolver::advection(float* value, float* value0, float* u, float* v, int flag)
 {
     float oldX;
     float oldY;
@@ -234,7 +234,7 @@ void StableSolver::advection(float* value, float* value0, float* u, float* v, in
     setBoundary(value, flag);
 }
 
-void StableSolver::diffusion(float* value, float* value0, float rate, int flag)
+void AirSolver::diffusion(float* value, float* value0, float rate, int flag)
 {
     for (int i = 0; i < totSize; i++) value[i] = 0.0f;
     float a = rate * timeStep;
@@ -252,7 +252,7 @@ void StableSolver::diffusion(float* value, float* value0, float rate, int flag)
     }
 }
 
-void StableSolver::vortConfinement()
+void AirSolver::vortConfinement()
 {
     for (int i = 1; i <= rowSize - 2; i++)
     {
@@ -301,7 +301,7 @@ void StableSolver::vortConfinement()
     setBoundary(vy, 2);
 }
 
-void StableSolver::addSource()
+void AirSolver::addSource()
 {
     int index;
     for (int i = 1; i <= rowSize - 2; i++)
@@ -320,7 +320,7 @@ void StableSolver::addSource()
     //setBoundary(d, 0);
 }
 
-void StableSolver::animVel()
+void AirSolver::animVel()
 {
     //if(diff > 0.0f)
     //{
@@ -342,7 +342,7 @@ void StableSolver::animVel()
 
 }
 
-void StableSolver::animDen()
+void AirSolver::animDen()
 {
     if (visc > 0.0f)
     {

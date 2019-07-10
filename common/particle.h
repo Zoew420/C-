@@ -9,45 +9,16 @@ namespace T {
     // 粒子类型
     enum class ParticleType {
         None = 0,
-        Sand = 1,
-        Iron = 2
+        Iron = 1,
+        Sand = 2,
+        Water = 3
     };
 
     inline float particle_mass(ParticleType type) {
-        return 0.1;
+        static const float particle_mass_lut[] = { NAN, INFINITY, 0.1f, 0.5f };
+        return particle_mass_lut[int(type)];
     }
 
-    //// 粒子基类
-    //struct IParticle {
-    //    virtual ParticleType get_type() = 0;
-    //    float temperature = 0.f;
-    //    vec2 position = vec2();
-    //};
-
-    //// 粉尘粒子基类
-    //struct IPowder : IParticle {
-    //    virtual float get_mass() = 0;
-    //    vec2 velocity = vec2();
-    //};
-
-    //// 固体粒子基类
-    //struct ISolid : IParticle {
-
-    //};
-
-    //// 沙
-    //struct Sand : IPowder {
-    //    ParticleType get_type() { return ParticleType::Sand; }
-    //    float get_mass() { return 1.f; }
-    //};
-
-    //// 铁
-    //struct Iron : ISolid {
-    //    ParticleType get_type() { return ParticleType::Iron; }
-    //};
-
-    // 通用粒子类
-    //using Particle = variant<Sand, Iron>;
 
     // 粒子的简略信息，由ViewModel返回给View
     struct ParticleInfo {
@@ -55,12 +26,28 @@ namespace T {
         vec2 position = vec2();
     };
 
+
+    struct Brush {
+        enum class Type {
+            Heat,
+            Particle
+        };
+        virtual Type type() = 0;
+    };
+
+    struct HeatBrush : Brush {
+
+        virtual Type type() { return Type::Heat; }
+    };
+
     // 新增粒子的笔刷
-    struct ParticleBrush {
+    struct ParticleBrush : Brush {
         vec2 center;
         float radius;
+        float heat;
         ParticleType type = ParticleType::None;
         ParticleBrush() = default;
-        ParticleBrush(vec2 center, float radius, ParticleType type) : center(center), radius(radius), type(type) {}
+        ParticleBrush(vec2 center, float radius, ParticleType type, float heat = 0.f) : center(center), radius(radius), type(type), heat(heat) {}
+        virtual Type type() { return Type::Particle; }
     };
 }

@@ -2,7 +2,7 @@
 #include "../common/particle.h"
 #include "../common/event.h"
 #include "../common/ping_pong.h"
-#include "GridStableSolver.h"
+#include "air_solver.h"
 #include "constant.h"
 #include <algorithm>
 #include "utility.h"
@@ -16,7 +16,7 @@ namespace T {
     class GameModel {
     public:
 
-        StableSolver airflow_solver;
+        AirSolver airflow_solver;
 
 
         // 记录一个像素点内全部的粒子
@@ -140,13 +140,20 @@ namespace T {
         }
 
         void compute_vel() {
+            compute_vel_basic();
+            compute_vel_liquid();
+        }
+
+        void compute_vel_basic() {
             for (int ip = 0; ip < state_cur.particles; ip++) {
+                state_next.p_vel[ip] = state_cur.p_vel[ip];
+
+
                 // get map index
                 ivec2 ipos = f2i(state_cur.p_pos[ip]);
                 int im = idx(ipos);
                 int im_air = idx_air(ipos);
 
-                if (state_cur.p_type[ip] != ParticleType::Sand) continue;
                 //vec2 v_air = vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]); // air velocity
                 vec2 v_air = bilinear_sample_air(ipos);
 
@@ -164,9 +171,104 @@ namespace T {
                 vec2 f = f_resis + f_gravity;
                 vec2 acc = f / mass;
 
-                state_next.p_vel[ip] = state_cur.p_vel[ip] + acc * K_DT; // set velocity
+                state_next.p_vel[ip] += acc * K_DT; // set velocity
             }
         }
+
+        struct LiquidBuffer {
+            vector<int> idx_mapping;
+            vector<float> rho, p;
+            void reset(int n) {
+                idx_mapping.resize(n);
+                rho.resize(n);
+                p.resize(n);
+            }
+        } liquid_buf;
+
+        template<typename F>
+        void iterate_neighbor_particles(ivec2 pos, int r_neibor, F f) {
+            for (int dx = -r_neibor; dx <= r_neibor; dx++) {
+                for (int dy = -r_neibor; dy <= r_neibor; dy++) {
+                    ivec2 n_pos = pos + ivec2(dx, dy);
+                    if (!in_bound(n_pos)) continue;
+                    if (dx * dx + dy * dy > r_neibor * r_neibor) continue;
+                    PixelParticleList& lst = state_cur.map_index[idx(n_pos)];
+                    if (!lst.nil()) {
+                        for (int t_ip = lst.from; t_ip <= lst.to; t_ip++) {
+                            f(t_ip);
+                        }
+                    }
+                }
+            }
+        }
+
+        void compute_vel_liquid() {
+            // 1. 所有粒子计算SPH应力（优化：液体附近粒子）
+            // 2. 各个粒子加速度累加到state_next上
+            int r_neibor = f2i(ceilf(H));
+
+            liquid_buf.reset(0);
+            int il = 0;
+            for (int ip = 0; ip < state_cur.particles; ip++) {
+                if (state_cur.p_type[ip] == ParticleType::Water) {
+                    ivec2 pos = state_cur.p_pos[ip];
+                    float p = 0, rho = 0; // 计算p、rho
+                    iterate_neighbor_particles(pos, r_neibor, [this, &p, &rho, ip](int t_ip) {
+                        vec2 pos_diff = this->state_cur.p_pos[t_ip] - this->state_cur.p_pos[ip];
+                        float r2 = dot(pos_diff, pos_diff);
+                        if (r2 < HSQ) {
+                            float t_mass = particle_mass(this->state_cur.p_type[t_ip]);
+                            rho += t_mass * POLY6 * pow(HSQ - r2, 3.f);
+                        }
+                    });
+                    p = GAS_CONST * (rho - REST_DENS);
+                    liquid_buf.idx_mapping.push_back(ip);
+                    liquid_buf.p.push_back(p);
+                    liquid_buf.rho.push_back(rho);
+                    il++;
+                }
+            }
+
+
+            for (int ip = 0; ip < state_cur.particles; ip++) {
+                ivec2 pos = state_cur.p_pos[ip];
+                float mass = particle_mass(state_cur.p_type[ip]);
+                iterate_neighbor_particles(pos, r_neibor, [this, mass, ip](int t_ip) {
+                    vec2 f_press = vec2();
+                    vec2 f_visc = vec2();
+                    if (t_ip == ip) return;
+                    if (this->state_cur.p_type[t_ip] != ParticleType::Water) return;
+
+                    vec2 pos_diff = this->state_cur.p_pos[t_ip] - this->state_cur.p_pos[ip];
+                    vec2 vel_diff = this->state_cur.p_vel[t_ip] - this->state_cur.p_vel[ip];
+                    float t_mass = particle_mass(this->state_cur.p_type[t_ip]);
+                    float r = length(pos_diff);
+
+                    if (r < H)
+                    {
+                        int il = liquid_buf.idx_mapping[ip];
+                        int t_il = liquid_buf.idx_mapping[t_ip];
+
+                        // compute pressure force contribution
+                        f_press += -normalize(pos_diff) * t_mass * liquid_buf.p[t_il] / liquid_buf.rho[t_il] * SPIKY_GRAD * pow(H - r, 2.f);
+                        //// compute viscosity force contribution
+                        f_visc += VISC * t_mass * vel_diff / liquid_buf.rho[t_il] * VISC_LAP * (H - r);
+                    
+                        vec2 f = f_press + f_visc;
+                        vec2 acc;
+                        if (this->state_next.p_type[ip] == ParticleType::Water) {
+                            acc = f / liquid_buf.rho[il];
+                        }
+                        else {
+                            acc = f / mass;
+                        }
+                        this->state_next.p_vel[ip] += acc * K_DT;
+                    }
+
+                });
+            }
+        }
+
 
         void compute_air_flow() {
 
@@ -174,12 +276,12 @@ namespace T {
                 ivec2 pos = f2i(state_cur.p_pos[i]);
                 if (bound_dist(pos) <= 2) continue;
                 int im_air = idx_air(pos);
-                if (state_cur.p_type[i] == ParticleType::Sand) {
+                if (state_cur.p_type[i] != ParticleType::Iron) {
                     vec2 diff = state_cur.p_vel[i] - vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
                     airflow_solver.getVX()[im_air] += diff.x / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                     airflow_solver.getVY()[im_air] += diff.y / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                 }
-                else if (state_cur.p_type[i] == ParticleType::Iron) {
+                else {
                     vec2 diff = -vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
                     airflow_solver.getVX()[im_air] += diff.x / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                     airflow_solver.getVY()[im_air] += diff.y / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
