@@ -332,6 +332,7 @@ namespace T {
                                 state_next.p_pos.push_back(vec2(x, y));
                                 state_next.p_type.push_back(cur_brush.type);
                                 state_next.p_vel.push_back(vec2());
+                                state_next.p_heat.push_back(0);
                             }
                         }
                     }
