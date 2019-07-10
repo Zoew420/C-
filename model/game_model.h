@@ -186,57 +186,82 @@ namespace T {
             int target_index;
         };
 
-
-		//正向  没拦住  bug
+		//dect2 myversion wrong
+		//fail reason analysis: 
+		//when the partcile can not go further because a particle block the road,it should 
+		//go back to the before position. it seems that it is likely that two sand can block each other'sway
 		bool detect_collision2(vec2 start, vec2 end, CollisionDetectionResult & result) {
-				int steps = length(end - start) / K_COLLISION_STEP_LENGTH;//每步的长度
-				vec2 delta = normalize(end - start) * K_COLLISION_STEP_LENGTH; //步长
 
-				int last_target = -1;
-				vec2 cur = start + delta;//排除所在的第一个位置，从第二个开始
-				vec2 final_pos = end;
+			vec2 final_pos = end;
+			int last_target = -1;
 
-				if (steps == 0 || steps == 1)//如果不满一格或刚好一格，取end做判断
-				{
-					PixelParticleList temp = state_cur.map_index[idx(end)];
-					if (!temp.nil()) {
-						last_target = random_sample(temp.from, temp.to);
-						final_pos = end;
+			float len = length(start - end);
+			if (len == 0.0f) goto exit;
+
+			int steps = length(end - start) / K_COLLISION_STEP_LENGTH;
+			vec2 temp = end - start;
+			vec2 delta = normalize(end - start) * K_COLLISION_STEP_LENGTH;
+			vec2 cur = start + delta;//排除所在的第一个位置，从第二个开始
+
+
+
+			if (steps == 0 || steps == 1)//如果不满一格或刚好一格，取end做判断
+			{
+				PixelParticleList temp = state_cur.map_index[idx(f2i(end))];
+				if (!temp.nil()) {
+					last_target = random_sample(temp.from, temp.to);
+					final_pos = start;		
+				}
+				goto exit;	
+				}
+
+
+			for (int i = 1; i < steps; i++) {
+				ivec2 m_pos = f2i(cur);
+				bool ext = false;
+				if (in_bound(m_pos)) {
+					PixelParticleList lst = state_cur.map_index[idx(m_pos)];
+					if (!lst.nil()) {
+						ext = true;
+						final_pos = cur - delta;
+						last_target = random_sample(lst.from, lst.to);
 					}
+				}
+				else {
+					final_pos = cur;
+					ext = true;
+				}
+
+				if (ext) {
 					goto exit;
 				}
-
-				for (int i = 1; i < steps; i++) {
-					bool ext = false;
-					if (in_bound(cur)) {
-						PixelParticleList lst = state_cur.map_index[idx(cur)];
-						if (!lst.nil()) {//遇到非空，退出
-							ext = true;
-							last_target = random_sample(lst.from, lst.to);
-						}
-					}
-					else { ext = true; }//超出边界，退出
-
-					if (ext) {
-						final_pos = cur;//update
-						goto exit;
-					}
-					cur += delta;
-				}
-			exit:
-				result.pos = final_pos;
-				result.target_index = last_target;
-				return last_target != -1;
+				cur += delta;
+			}
+		
+		
+		exit:
+			result.pos = final_pos;
+			result.target_index = last_target;
+			return last_target != -1;
 		}
 
+		//dect correct version
 		bool detect_collision(vec2 start, vec2 end, CollisionDetectionResult & result) {
-			int steps = length(start - end) / K_COLLISION_STEP_LENGTH;
+			int last_target = -1;
+			vec2 final_pos = start;
+			float len = length(start - end);
+			if (len == 0.0f) goto exit;
+
+			int steps = len / K_COLLISION_STEP_LENGTH;
 			vec2 delta = normalize(start - end) * K_COLLISION_STEP_LENGTH; // 步长=1
 
-			int last_target = -1;
+
 			vec2 cur = end;
 			ivec2 self = f2i(start);
-			vec2 final_pos = start;
+
+			if (steps == 0) {
+				steps = 1;
+			}
 
 			for (int i = 0; i < steps; i++) {
 				ivec2 m_pos = f2i(cur);
@@ -262,25 +287,28 @@ namespace T {
 			return last_target != -1;
 		}
 
+
 		void compute_position() {
-            // 更新位置，碰撞检测
-            for (int ip = 0; ip < state_cur.particles; ip++) {
+			// 更新位置，碰撞检测
+			for (int ip = 0; ip < state_cur.particles; ip++) {
 				ParticleType source_type = state_cur.p_type[ip];
-                if (source_type == ParticleType::Iron) continue;
+				if (source_type == ParticleType::Iron) continue;
 
+				vec2 v = state_cur.p_vel[ip];
+				vec2 pos_old = state_cur.p_pos[ip];
+				vec2 pos_new = pos_old + v * K_DT;
 
-                vec2 v = state_cur.p_vel[ip];
-                vec2 pos_old = state_cur.p_pos[ip];
-                vec2 pos_new = pos_old + v * K_DT;
+				CollisionDetectionResult c_res;
 
-                CollisionDetectionResult c_res;
+				int  temp = idx(vec2(40, 60));
+				state_cur.map_index[temp];
 
-                bool collided = detect_collision(pos_old, pos_new, c_res);
+				bool collided = detect_collision(pos_old, pos_new, c_res);
 
 				if (collided) {
 					ParticleType target_type = state_cur.p_type[c_res.target_index];
-						float v1x0,v1y0,v2x0,v2y0;
-						float v1x1,v1y1,v2x1,v2y1;
+						float v1x0, v1y0, v2x0, v2y0;
+						float v1x1, v1y1, v2x1, v2y1;
 
 						float m1, m2;
 						m1 = particle_mass(source_type);
@@ -294,27 +322,25 @@ namespace T {
 						v1y0 = state_next.p_vel[ip].y;
 						v2y0 = state_next.p_vel[c_res.target_index].y;
 
-						v1x1 = 1.0 * (m1 * v1x0 + m2 * v2x0 + K_RESTITUTION * m2 * (v2x0 - v1x0))/ (m1 + m2);
-						v1y1 = 1.0 * (m1 * v1y0 + m2 * v2y0 + K_RESTITUTION * m2 * (v2y0 - v1y0))/ (m1 + m2);
+						v1x1 = 1.0 * (m1 * v1x0 + m2 * v2x0 + K_RESTITUTION * m2 * (v2x0 - v1x0)) / (m1 + m2);
+						v1y1 = 1.0 * (m1 * v1y0 + m2 * v2y0 + K_RESTITUTION * m2 * (v2y0 - v1y0)) / (m1 + m2);
 
-						v2x1 = 1.0 * (m1 * v1x0 + m2 * v2x0 + K_RESTITUTION * m1 * (v1x0 - v2x0))/ (m1 + m2);
-						v2y1 = 1.0 * (m1 * v1y0 + m2 * v2y0 + K_RESTITUTION * m1 * (v1y0 - v2y0))/ (m1 + m2);
-					
+						v2x1 = 1.0 * (m1 * v1x0 + m2 * v2x0 + K_RESTITUTION * m1 * (v1x0 - v2x0)) / (m1 + m2);
+						v2y1 = 1.0 * (m1 * v1y0 + m2 * v2y0 + K_RESTITUTION * m1 * (v1y0 - v2y0)) / (m1 + m2);
+
 						state_next.p_vel[ip] = vec2(v1x1, v1y1);
 						state_next.p_vel[c_res.target_index] = vec2(v2x1, v2y1);
-                }
-                state_next.p_pos[ip] = c_res.pos;
+				}
 
-                ivec2 coord = f2i(c_res.pos);
-                if (!in_bound(coord)) {
-                    state_next.p_type[ip] = ParticleType::None;
-                }
-            }
-        }
+				state_next.p_pos[ip] = c_res.pos;
 
-
-
-
+				ivec2 coord = f2i(c_res.pos);
+				if (!in_bound(coord)) {
+					state_next.p_type[ip] = ParticleType::None;
+				}
+			}
+		}
+		
         struct ReorderBuffer {
             vector<int> p_idx; // 记录各个粒子对应的画布下标
             vector<int> sort; // 初始时为0..particles-1，根据画布下标排序
