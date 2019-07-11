@@ -582,27 +582,49 @@ namespace T {
 
         }
 
-        ParticleBrush cur_brush;
+        ParticleBrush cur_particle_brush;
         void handle_new_particles() {
             // 扩大数组，将新粒子追加到state_next尾部
-            if (cur_brush.type != ParticleType::None) {
-                ivec2 center = f2i(cur_brush.center);
-                int r_find = cur_brush.radius + 1;
+            if (cur_particle_brush.type != ParticleType::None) {
+                ivec2 center = f2i(cur_particle_brush.center);
+                int r_find = cur_particle_brush.radius + 1;
                 for (int x = center.x - r_find; x <= center.x + r_find; x++) {
                     for (int y = center.y - r_find; y <= center.y + r_find; y++) {
-                        if (in_bound(x, y) && glm::distance(vec2(x, y), cur_brush.center) <= cur_brush.radius) {
+                        if (in_bound(x, y) && glm::distance(vec2(x, y), cur_particle_brush.center) <= cur_particle_brush.radius) {
                             if (state_cur.map_index[idx(ivec2(x, y))].nil()) {
                                 state_next.particles++;
                                 vec2 jitter = vec2(random(-1, 1), random(-1, 1)) * 0.2f;
                                 state_next.p_pos.push_back(vec2(x, y) + jitter);
-                                state_next.p_type.push_back(cur_brush.type);
+                                state_next.p_type.push_back(cur_particle_brush.type);
                                 state_next.p_vel.push_back(vec2());
                                 state_next.p_heat.push_back(0);
                             }
                         }
                     }
                 }
-                cur_brush.type = ParticleType::None;
+                cur_particle_brush.type = ParticleType::None;
+            }
+        }
+
+        bool has_heat_brush = false;
+        HeatBrush cur_heat_brush;
+        void handle_change_heat() {
+            if (has_heat_brush) {
+                ivec2 center = f2i(cur_heat_brush.center);
+                int r_find = cur_heat_brush.radius + 1;
+                for (int x = center.x - r_find; x <= center.x + r_find; x++) {
+                    for (int y = center.y - r_find; y <= center.y + r_find; y++) {
+                        if (in_bound(x, y) && glm::distance(vec2(x, y), cur_heat_brush.center) <= cur_heat_brush.radius) {
+                            PixelParticleList lst = state_cur.map_index[idx(ivec2(x, y))];
+                            if (!lst.nil()) {
+                                for (int ip = lst.from; ip <= lst.to; ip++) {
+                                    state_next.p_heat[ip] += (cur_heat_brush.increase ? 1 : -1) * K_HEAT_DELTA;
+                                }
+                            }
+                        }
+                    }
+                }
+                has_heat_brush = false;
             }
         }
 
@@ -630,16 +652,18 @@ namespace T {
             compute_vel();
             compute_position();
             compute_air_flow();
+            handle_change_heat();
             handle_new_particles();
             complete();
         }
 
         void set_new_particles(ParticleBrush brush) {
-            cur_brush = brush;
+            cur_particle_brush = brush;
         }
 
         void set_heat(HeatBrush brush) {
-            // TODO
+            has_heat_brush = true;
+            cur_heat_brush = brush;
         }
 
         struct QueryParticleResult {

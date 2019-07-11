@@ -5,17 +5,17 @@ namespace T {
     using namespace glm;
     const int K_AIRFLOW_DOWNSAMPLE = 4;
     const int K_LIQUID_DOWNSAMPLE = 8;
-
     const float K_COLLISION_STEP_LENGTH = .5;
-    const float EPS = 1E-6;
+   
     const float K_AIR_RESISTANCE = 0.2;
-
     const float K_GRAVITY = 10.0;
     const float K_DT = 0.1f;
     const float K_RESTITUTION = 0.2;
-
     const int K_LIQUID_ITERATIONS = 5;
 
+    const float K_HEAT_DELTA = 3.f;
+
+    const float EPS = 1E-6;
     const float H = 7.f;//16.f * K_LIQUID_SCALE; // kernel radius
     inline float kernel_fn(float dist) {
         return 20 * pow(H - dist, 2);
