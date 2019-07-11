@@ -89,11 +89,8 @@ static void HelpMarker(const char* desc)
 
 void T::GameWindow::OnCreate()
 {
-	bool show_state_choice = true;
-	bool show_brush_choice = true;
-	bool show_brush_func = true;
 	bool show_mouse_state = true;
-	bool exit_button = true;
+	bool show_menu = true;
 
 	while (!glfwWindowShouldClose(window)) {
 		//äÖÈ¾Ñ­»·
@@ -106,12 +103,30 @@ void T::GameWindow::OnCreate()
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		bool window_flag = show_state_choice & show_brush_choice & show_brush_func;
-		if (window_flag) {
+		if (show_menu) {
 			ImGui::SetNextWindowPos(ImVec2(0, 5), ImGuiCond_Appearing);
-			ImGui::Begin("Brush Function Choose:", &window_flag, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Begin("Brush Function Choose:", &show_menu, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			if (ImGui::BeginMenuBar())
 			{
+				if (ImGui::BeginMenu("Mode Setting")) {
+					ImGui::CheckboxFlags("Paint", (unsigned int*)&mode_draw, 1); ImGui::SameLine(75);
+					if (mode_draw == true) {
+						mode_heat = false;
+						mode_pressure = false;
+					}
+					ImGui::CheckboxFlags("Temperature Graph", (unsigned int*)&mode_heat, 1); ImGui::SameLine(225);
+					if (mode_heat == true) {
+						mode_draw = false;
+						mode_pressure = false;
+					}
+					ImGui::CheckboxFlags("Pressure Graph", (unsigned int*)&mode_pressure, 1); 
+					if (mode_pressure == true) {
+						mode_draw = false;
+						mode_heat = false;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::SameLine(110);
 				if (ImGui::BeginMenu("Brush Type Choose"))
 				{
 					ImGui::CheckboxFlags("Sand", (unsigned int*)&draw_sand, 1); ImGui::SameLine(150);
@@ -134,7 +149,7 @@ void T::GameWindow::OnCreate()
 					}
 					ImGui::EndMenu();
 				}
-				ImGui::SameLine(150);
+				ImGui::SameLine(260);
 				if (ImGui::BeginMenu("Brush Size Choose"))
 				{
 					ImGui::CheckboxFlags("1 pix", (unsigned int*)&brush_1pix, 1); ImGui::SameLine(150);
@@ -154,7 +169,7 @@ void T::GameWindow::OnCreate()
 					}
 					ImGui::EndMenu();
 				}
-				ImGui::SameLine(300);
+				ImGui::SameLine(410);
 				if (ImGui::BeginMenu("Brush Function Choose"))
 				{
 					ImGui::CheckboxFlags("Painting Pen", (unsigned int*)&draw, 1); ImGui::SameLine(150);
@@ -181,10 +196,9 @@ void T::GameWindow::OnCreate()
 			ImGui::End();
 		}
 
-
 		if (show_mouse_state) {
 			ImGui::SetNextWindowPos(ImVec2(475, 580), ImGuiCond_Appearing);
-			ImGui::Begin("Mouse state:", &show_state_choice, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Begin("Mouse state:", &show_mouse_state, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y); ImGui::SameLine();
 			ImGui::Text("Click Last:");
 			if (io.MouseDownDuration[0] >= 0.0f)
@@ -214,20 +228,22 @@ void T::GameWindow::OnCreate()
 
 void T::GameWindow::MouseClickEvent()
 {
-	ImGuiIO& io = ImGui::GetIO();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-	if (io.MouseDownDuration[0] >= 0.0f) {
-		GLfloat x, y;
-		x = io.MousePos.x;
-		y = io.MousePos.y;
-        if (y >= 50 && y <= 600) {
-            vec2 p;
-            p.x = x; p.y = y;
-			if(draw == true)  UpdataParticles(p);
-			else UpdataParticlesHeat(p);
-        }
+	if (mode_draw == true) {
+		ImGuiIO& io = ImGui::GetIO();
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+		if (io.MouseDownDuration[0] >= 0.0f) {
+			GLfloat x, y;
+			x = io.MousePos.x;
+			y = io.MousePos.y;
+			if (y >= 50 && y <= 600) {
+				vec2 p;
+				p.x = x; p.y = y;
+				if (draw == true)  UpdataParticles(p);
+				else UpdataParticlesHeat(p);
+			}
+		}
 	}
 }
 
@@ -242,32 +258,86 @@ T::GameView::GameView()
 	draw = true;
 	inc_heat = false;
 	dec_heat = false;
+	mode_draw = true;
+	mode_heat = false;
+	mode_pressure = false;
 	on_data_ready = make_shared<DataReadyEventHandler>(this);
+	on_heat_ready = make_shared<HeatReadyEventHandler>(this);
+	on_pressure_ready = make_shared<PressureReadyEventHandler>(this);
 }
 
-void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
+void T::GameView::Handler_Data(const std::vector<ParticleInfo>& particles)
 {
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-	for (int i = 0; i < particles.size(); i++)
-	{
+	if (mode_draw == true) {
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+		for (int i = 0; i < particles.size(); i++)
+		{
 
-		float x = particles[i].position.x;
-		float y = particles[i].position.y;
-		x -= 400; y = 300 - y;
-		if (particles[i].type == ParticleType::Iron)
-		{
-			DrawPaticle(x, y, 1.0f, int(ParticleType::Iron));
+			float x = particles[i].position.x;
+			float y = particles[i].position.y;
+			x -= 400; y = 300 - y;
+			if (particles[i].type == ParticleType::Iron)
+			{
+				DrawPaticle(x, y, 1.0f, int(ParticleType::Iron));
+			}
+			else if (particles[i].type == ParticleType::Sand)
+			{
+				DrawPaticle(x, y, 1.0f, int(ParticleType::Sand));
+			}
+			else if (particles[i].type == ParticleType::Water)
+			{
+				DrawPaticle(x, y, 1.0f, int(ParticleType::Water));
+			}
 		}
-		else if (particles[i].type == ParticleType::Sand)
+	}
+	else
+	{
+		return;
+	}
+}
+
+void T::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
+{
+	if (mode_heat == true) {
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+		for (int i = 0; i < heat.size(); i++)
 		{
-			DrawPaticle(x, y, 1.0f, int(ParticleType::Sand));
+			float x = heat[i].position.x;
+			float y = heat[i].position.y;
+			x -= 400; y = 300 - y;
+			float temperature = heat[i].temperature;
+			DrawHeat(x, y, 1.0f, temperature);
 		}
-		else if (particles[i].type == ParticleType::Water) 
-		{
-			DrawPaticle(x, y, 1.0f, int(ParticleType::Water));
+	}
+	else
+	{
+		return;
+	}
+}
+
+void T::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressure)
+{
+	if (mode_pressure == true)
+	{
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+		int m = pressure[0].size();
+		int n = pressure.size();
+		for (int i = 0; i <= m; i++) {
+			for (int j = 0; j <= n; j++) {
+				float p = pressure[i][j];
+				DrawHeat(i, j, 1.0f, p);
+			}
 		}
+	}
+	else
+	{
+		return;
 	}
 }
 

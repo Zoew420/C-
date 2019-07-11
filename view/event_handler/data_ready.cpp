@@ -4,6 +4,6 @@
 namespace T {
 	void DataReadyEventHandler::handle(const std::vector<ParticleInfo>& particles)
 	{
-		view->Handler(particles);
+		view->Handler_Data(particles);
 	}
 }

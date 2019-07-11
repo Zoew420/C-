@@ -8,6 +8,8 @@
 #include "imgui/glew/GL/glew.h"
 #include "imgui/glfw/include/GLFW/glfw3.h"
 #include "event_handler/data_ready.h"
+#include "event_handler/heat_ready.h"
+#include "event_handler/pressure_ready.h"
 #include "draw_particle.h"
 #include <iostream>
 #include <vector>
@@ -29,9 +31,11 @@ namespace T {
 		bool draw;
 		bool inc_heat;
 		bool dec_heat;
-		/*Iron和Sand画笔的纹理*/
-		GLuint texture[2];
-
+		/*窗口模式设定*/
+		bool mode_draw;
+		bool mode_heat;
+		bool mode_pressure;
+		
         // 更新事件源（View通知ViewModel进行逻辑更新）
         EventSource<> event_update;
 
@@ -44,9 +48,19 @@ namespace T {
         // 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
         shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
 		
+		//温度数据准备完毕的处理函数
+		shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_heat_ready;
+		
+		//压强数据准备完毕的处理函数
+		shared_ptr<EventHandler<const vector<vector<float>>&>> on_pressure_ready;
+		
 		GameView();
 
-		void Handler(const vector<ParticleInfo>& particles);
+		void Handler_Data(const vector<ParticleInfo>& particles);
+
+		void Handler_Heat(const vector<ParticleInfo>& heat);
+
+		void Handler_Pressure(const vector<vector<float>>& pressure);
 
 		void UpdataParticles(const vec2& point);
 

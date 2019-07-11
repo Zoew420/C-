@@ -83,12 +83,9 @@ namespace T {
 		/*float ** heat;*/
 
 		float ** query_pressure() {
-			for (int i = 0; i < height; i++)
-				for (int j = 0; j < width; j++)pressure[i][j] = 0;
-
 			for (int i = 0; i < height; i++) {
 				for (int j = 0; j < width; j++)
-					pressure[i][j] = airflow_solver.p[idx_air(i, j)];
+					pressure[i][j] = airflow_solver.p[idx_air(j,i)];
 			}
 			return pressure;
 		}
