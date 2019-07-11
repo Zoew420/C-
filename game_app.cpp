@@ -3,7 +3,7 @@
 #include "view_model/game_view_model.h"
 
 using namespace T;
-const int msize = 512;
+const int msize = 256;
 int main() {
 	GameWindow win;
     GameModel gm(msize, msize);

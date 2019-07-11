@@ -42,7 +42,7 @@ AirSolver::~AirSolver()
     free(px);
     free(py);
     free(div);
-    free(p);
+    free(lp_p);
 
     //vorticity confinement
     free(vort);
@@ -84,7 +84,7 @@ void AirSolver::init(int r, int c, float dt)
     px = (float*)malloc(sizeof(float) * totSize);
     py = (float*)malloc(sizeof(float) * totSize);
     div = (float*)malloc(sizeof(float) * totSize);
-    p = (float*)malloc(sizeof(float) * totSize);
+    lp_p = (float*)malloc(sizeof(float) * totSize);
     ptmp = (float*)malloc(sizeof(float) * totSize);
 
     //vorticity confinement
@@ -159,11 +159,11 @@ void AirSolver::projection()
         for (int j = 1; j <= colSize - 2; j++)
         {
             div[cIdx(i, j)] = 0.5f * (vx[cIdx(i + 1, j)] - vx[cIdx(i - 1, j)] + vy[cIdx(i, j + 1)] - vy[cIdx(i, j - 1)]);
-            p[cIdx(i, j)] = 0.0f;
+            lp_p[cIdx(i, j)] = 0.0f;
         }
     }
     setBoundary(div, 0);
-    setBoundary(p, 0);
+    setBoundary(lp_p, 0);
 
     //projection iteration
     for (int k = 0; k < 20; k++)
@@ -172,10 +172,10 @@ void AirSolver::projection()
         {
             for (int j = 1; j <= colSize - 2; j++)
             {
-                p[cIdx(i, j)] = (p[cIdx(i + 1, j)] + p[cIdx(i - 1, j)] + p[cIdx(i, j + 1)] + p[cIdx(i, j - 1)] - div[cIdx(i, j)]) / 4.0f;
+                lp_p[cIdx(i, j)] = (lp_p[cIdx(i + 1, j)] + lp_p[cIdx(i - 1, j)] + lp_p[cIdx(i, j + 1)] + lp_p[cIdx(i, j - 1)] - div[cIdx(i, j)]) / 4.0f;
             }
         }
-        setBoundary(p, 0);
+        setBoundary(lp_p, 0);
     }
 
     //velocity minus grad of Pressure
@@ -183,8 +183,8 @@ void AirSolver::projection()
     {
         for (int j = 1; j <= colSize - 2; j++)
         {
-            vx[cIdx(i, j)] -= 0.5f * (p[cIdx(i + 1, j)] - p[cIdx(i - 1, j)]);
-            vy[cIdx(i, j)] -= 0.5f * (p[cIdx(i, j + 1)] - p[cIdx(i, j - 1)]);
+            vx[cIdx(i, j)] -= 0.5f * (lp_p[cIdx(i + 1, j)] - lp_p[cIdx(i - 1, j)]);
+            vy[cIdx(i, j)] -= 0.5f * (lp_p[cIdx(i, j + 1)] - lp_p[cIdx(i, j - 1)]);
         }
     }
     setBoundary(vx, 1);

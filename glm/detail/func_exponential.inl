@@ -56,8 +56,8 @@ namespace detail
 		{
 			vec<L, float, lowp> tmp(x);
 			vec<L, float, lowp> xhalf(tmp * 0.5f);
-			vec<L, uint, lowp>* p = reinterpret_cast<vec<L, uint, lowp>*>(const_cast<vec<L, float, lowp>*>(&x));
-			vec<L, uint, lowp> i = vec<L, uint, lowp>(0x5f375a86) - (*p >> vec<L, uint, lowp>(1));
+			vec<L, uint, lowp>* lp_p = reinterpret_cast<vec<L, uint, lowp>*>(const_cast<vec<L, float, lowp>*>(&x));
+			vec<L, uint, lowp> i = vec<L, uint, lowp>(0x5f375a86) - (*lp_p >> vec<L, uint, lowp>(1));
 			vec<L, float, lowp>* ptmp = reinterpret_cast<vec<L, float, lowp>*>(&i);
 			tmp = *ptmp;
 			tmp = tmp * (1.5f - xhalf * tmp * tmp);

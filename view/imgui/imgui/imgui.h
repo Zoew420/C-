@@ -1205,7 +1205,7 @@ inline void  operator delete(void*, ImNewDummy, void*)   {} // This is only requ
 #define IM_FREE(_PTR)                       ImGui::MemFree(_PTR)
 #define IM_PLACEMENT_NEW(_PTR)              new(ImNewDummy(), _PTR)
 #define IM_NEW(_TYPE)                       new(ImNewDummy(), ImGui::MemAlloc(sizeof(_TYPE))) _TYPE
-template<typename T> void IM_DELETE(T* p)   { if (p) { p->~T(); ImGui::MemFree(p); } }
+template<typename T> void IM_DELETE(T* lp_p)   { if (lp_p) { lp_p->~T(); ImGui::MemFree(lp_p); } }
 
 //-----------------------------------------------------------------------------
 // Helper: ImVector<>

@@ -15,7 +15,7 @@ namespace T {
     };
 
     inline float particle_mass(ParticleType type) {
-        static const float particle_mass_lut[] = { 1, 1, 0.1f, 0.6f };
+        static const float particle_mass_lut[] = { 1, 1E+8, 0.1f, 0.6f };
         return particle_mass_lut[int(type)];
     }
 

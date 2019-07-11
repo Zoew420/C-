@@ -223,10 +223,10 @@ void T::GameWindow::MouseClickEvent()
 		x = io.MousePos.x;
 		y = io.MousePos.y;
         if (y >= 50 && y <= 600) {
-            vec2 p;
-            p.x = x; p.y = y;
-			if(draw == true)  UpdataParticles(p);
-			else UpdataParticlesHeat(p);
+            vec2 lp_p;
+            lp_p.x = x; lp_p.y = y;
+			if(draw == true)  UpdataParticles(lp_p);
+			else UpdataParticlesHeat(lp_p);
         }
 	}
 }

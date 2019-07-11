@@ -11,26 +11,35 @@ int main() {
     GameModel gm(msize, msize);
 
     for (int i = 10; i <= 90; i += 2) {
-        gm.set_new_particles(ParticleBrush(vec2(i, 70), 3, ParticleType::Iron));
+        gm.set_new_particles(ParticleBrush(vec2(40, i), 3, ParticleType::Iron));
+        gm.update();
+        gm.set_new_particles(ParticleBrush(vec2(60, i), 3, ParticleType::Iron));
         gm.update();
     }
 
-    gm.set_new_particles(ParticleBrush(vec2(10, 65), 5, ParticleType::Iron));
-    gm.update();        
-    gm.set_new_particles(ParticleBrush(vec2(10, 60), 5, ParticleType::Iron));
-    gm.update();
-    //gm.set_new_particles(ParticleBrush(vec2(10, 55), 5, ParticleType::Iron));
-    gm.update();
+    for (int i = 40; i <= 60; i += 2) {
+        gm.set_new_particles(ParticleBrush(vec2(i, 90), 3, ParticleType::Iron));
+        gm.update();
+    }
+    for (int i = 40; i <= 60; i += 2) {
+        gm.set_new_particles(ParticleBrush(vec2(i, 88), 3, ParticleType::Iron));
+        gm.update();
+    }
+    for (int i = 40; i <= 60; i += 2) {
+        gm.set_new_particles(ParticleBrush(vec2(i, 86), 3, ParticleType::Iron));
+        gm.update();
+    }
 
-    gm.set_new_particles(ParticleBrush(vec2(90, 65), 5, ParticleType::Iron));
+    gm.set_new_particles(ParticleBrush(vec2(50, 10), 10, ParticleType::Water));
     gm.update();
-    gm.set_new_particles(ParticleBrush(vec2(90, 60), 5, ParticleType::Iron));
+    gm.set_new_particles(ParticleBrush(vec2(50, 20), 10, ParticleType::Water));
     gm.update();
-    //gm.set_new_particles(ParticleBrush(vec2(90, 55), 5, ParticleType::Iron));
+    gm.set_new_particles(ParticleBrush(vec2(50, 30), 10, ParticleType::Water));
     gm.update();
-
-    gm.set_new_particles(ParticleBrush(vec2(50, 50), 20, ParticleType::Water));
-
+    gm.set_new_particles(ParticleBrush(vec2(50, 40), 10, ParticleType::Water));
+    gm.update();
+    gm.set_new_particles(ParticleBrush(vec2(50, 50), 10, ParticleType::Water));
+    gm.update();
     int i = 0;
     while (1) {
        // Sleep(10);

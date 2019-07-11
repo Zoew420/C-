@@ -6,19 +6,22 @@ namespace T {
     const int K_AIRFLOW_DOWNSAMPLE = 4;
     const float K_COLLISION_STEP_LENGTH = .5;
     const float EPS = 1E-6;
-    const float K_AIR_RESISTANCE = 0.02;
+    const float K_AIR_RESISTANCE = 0.0;
 
     const float K_GRAVITY = 50.0;
-    const float K_DT = 0.004;
-   
+    const float K_DT = 0.01f;
+    const float K_RESTITUTION = 0.0;
+
+    const int K_LIQUID_ITERATIONS = 1;
+
 
     const float M_PI = 3.14159;
 
-    const float REST_DENS = 3.42; // rest density
-    const float GAS_CONST = 1000.f; // const for equation of state
-    const float H = 0.8f;//16.f * K_LIQUID_SCALE; // kernel radius
+    const float REST_DENS = 2; // rest density
+    const float GAS_CONST = 10.f; // const for equation of state
+    const float H = 1.5f;//16.f * K_LIQUID_SCALE; // kernel radius
     const float HSQ = H * H; // radius^2 for optimization
-    const float VISC =1; // viscosity constant
+    const float VISC = 0.1; // viscosity constant
 
 
     //constexpr float SCALE = 1;//0.65E+3;

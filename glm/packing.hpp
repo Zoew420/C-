@@ -87,7 +87,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/unpackUnorm2x16.xml">GLSL unpackUnorm2x16 man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.4 Floating-Point Pack and Unpack Functions</a>
-	GLM_FUNC_DECL vec2 unpackUnorm2x16(uint p);
+	GLM_FUNC_DECL vec2 unpackUnorm2x16(uint lp_p);
 
 	/// First, unpacks a single 32-bit unsigned integer p into a pair of 16-bit unsigned integers, four 8-bit unsigned integers, or four 8-bit signed integers.
 	/// Then, each component is converted to a normalized floating-point value to generate the returned two- or four-component vector.
@@ -100,7 +100,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/unpackSnorm2x16.xml">GLSL unpackSnorm2x16 man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.4 Floating-Point Pack and Unpack Functions</a>
-	GLM_FUNC_DECL vec2 unpackSnorm2x16(uint p);
+	GLM_FUNC_DECL vec2 unpackSnorm2x16(uint lp_p);
 
 	/// First, unpacks a single 32-bit unsigned integer p into a pair of 16-bit unsigned integers, four 8-bit unsigned integers, or four 8-bit signed integers.
 	/// Then, each component is converted to a normalized floating-point value to generate the returned two- or four-component vector.
@@ -113,7 +113,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/unpackUnorm4x8.xml">GLSL unpackUnorm4x8 man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.4 Floating-Point Pack and Unpack Functions</a>
-	GLM_FUNC_DECL vec4 unpackUnorm4x8(uint p);
+	GLM_FUNC_DECL vec4 unpackUnorm4x8(uint lp_p);
 
 	/// First, unpacks a single 32-bit unsigned integer p into a pair of 16-bit unsigned integers, four 8-bit unsigned integers, or four 8-bit signed integers.
 	/// Then, each component is converted to a normalized floating-point value to generate the returned two- or four-component vector.
@@ -126,7 +126,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/unpackSnorm4x8.xml">GLSL unpackSnorm4x8 man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.4 Floating-Point Pack and Unpack Functions</a>
-	GLM_FUNC_DECL vec4 unpackSnorm4x8(uint p);
+	GLM_FUNC_DECL vec4 unpackSnorm4x8(uint lp_p);
 
 	/// Returns a double-qualifier value obtained by packing the components of v into a 64-bit value.
 	/// If an IEEE 754 Inf or NaN is created, it will not signal, and the resulting floating point value is unspecified.
