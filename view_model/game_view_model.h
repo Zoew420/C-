@@ -10,15 +10,16 @@ namespace T {
     class GameViewModel {
         GameModel* model;
 
-		vector<float>gvh;//heat of 2 dimension(height * width)
+		vector<ParticleInfo> gvh;
         vector<ParticleInfo> data_buffer;
 		vector<vector<float>>gvp;//pressure of 2 dimension(height * width)
 		
 
 		void trigger_heat_ready() {
+			gvh.clear();
 			auto heat = model->query_particles();
 			for (int i = 0; i < heat.temperature.size(); i++) {
-				gvh.push_back(heat.temperature[i]);
+				gvh.push_back(ParticleInfo{ heat.type[i],heat.position[i],heat.temperature[i] });
 			}
 			event_heat_ready.trigger(gvh);
 		}
@@ -52,7 +53,7 @@ namespace T {
 
 		EventSource<const vector<vector<float>>&> event_pressure_ready;
 
-		EventSource<const vector<float>&> event_heat_ready;
+		EventSource<const vector<ParticleInfo>&> event_heat_ready;
 
 
         // 更新事件处理程序（View通知ViewModel进行逻辑更新）
