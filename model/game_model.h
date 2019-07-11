@@ -178,31 +178,23 @@ namespace T {
             airflow_solver.animVel();
             //airflow_solver.vortConfinement();
         } 
-
-
 		
         struct CollisionDetectionResult {
             vec2 pos;
             int target_index;
         };
 
-		//dect2 myversion wrong
-		//fail reason analysis: 
-		//when the partcile can not go further because a particle block the road,it should 
-		//go back to the before position. it seems that it is likely that two sand can block each other'sway
-		bool detect_collision2(vec2 start, vec2 end, CollisionDetectionResult & result) {
+		bool detect_collision(vec2 start, vec2 end, CollisionDetectionResult & result) {
 
-			vec2 final_pos = end;
+			vec2 final_pos = end;//no collision->to the end
 			int last_target = -1;
 
 			float len = length(start - end);
 			if (len == 0.0f) goto exit;
 
 			int steps = length(end - start) / K_COLLISION_STEP_LENGTH;
-			vec2 temp = end - start;
 			vec2 delta = normalize(end - start) * K_COLLISION_STEP_LENGTH;
 			vec2 cur = start + delta;//排除所在的第一个位置，从第二个开始
-
 
 
 			if (steps == 0 || steps == 1)//如果不满一格或刚好一格，取end做判断
@@ -210,20 +202,21 @@ namespace T {
 				PixelParticleList temp = state_cur.map_index[idx(f2i(end))];
 				if (!temp.nil()) {
 					last_target = random_sample(temp.from, temp.to);
-					final_pos = start;		
+					if(idx(f2i(start)) == idx(f2i(end)))final_pos = end;
+					else final_pos = start;
 				}
 				goto exit;	
 				}
 
-
 			for (int i = 1; i < steps; i++) {
 				ivec2 m_pos = f2i(cur);
 				bool ext = false;
+
 				if (in_bound(m_pos)) {
 					PixelParticleList lst = state_cur.map_index[idx(m_pos)];
-					if (!lst.nil()) {
+					if (!lst.nil() && idx(f2i(cur)) != idx(f2i(cur-delta))) {
 						ext = true;
-						final_pos = cur - delta;
+						final_pos = cur-delta;
 						last_target = random_sample(lst.from, lst.to);
 					}
 				}
@@ -231,52 +224,7 @@ namespace T {
 					final_pos = cur;
 					ext = true;
 				}
-
 				if (ext) {
-					goto exit;
-				}
-				cur += delta;
-			}
-		
-		
-		exit:
-			result.pos = final_pos;
-			result.target_index = last_target;
-			return last_target != -1;
-		}
-
-		//dect correct version
-		bool detect_collision(vec2 start, vec2 end, CollisionDetectionResult & result) {
-			int last_target = -1;
-			vec2 final_pos = start;
-			float len = length(start - end);
-			if (len == 0.0f) goto exit;
-
-			int steps = len / K_COLLISION_STEP_LENGTH;
-			vec2 delta = normalize(start - end) * K_COLLISION_STEP_LENGTH; // 步长=1
-
-
-			vec2 cur = end;
-			ivec2 self = f2i(start);
-
-			if (steps == 0) {
-				steps = 1;
-			}
-
-			for (int i = 0; i < steps; i++) {
-				ivec2 m_pos = f2i(cur);
-				bool ext = true;
-				if (in_bound(m_pos)) {
-					PixelParticleList lst = state_cur.map_index[idx(m_pos)];
-					if (lst.nil() || self == m_pos) {
-					}
-					else {
-						ext = false;
-						last_target = random_sample(lst.from, lst.to);
-					}
-				}
-				if (ext) {
-					final_pos = cur;
 					goto exit;
 				}
 				cur += delta;
@@ -286,6 +234,7 @@ namespace T {
 			result.target_index = last_target;
 			return last_target != -1;
 		}
+
 
 
 		void compute_position() {
