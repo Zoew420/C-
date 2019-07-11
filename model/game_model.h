@@ -18,7 +18,6 @@ namespace T {
 
         AirSolver airflow_solver;
 
-
         // 记录一个像素点内全部的粒子
         struct PixelParticleList {
             int from = -1, to = -1;
@@ -80,6 +79,20 @@ namespace T {
 
 
         int width, height;
+		float ** pressure;
+		/*float ** heat;*/
+
+		float ** query_pressure() {
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)pressure[i][j] = 0;
+
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++)
+					pressure[i][j] = airflow_solver.p[idx_air(i, j)];
+			}
+			return pressure;
+		}
+
 
         bool in_bound(int c, int r) { return r >= 0 && r < height && c >= 0 && c < width; }
         bool in_bound(ivec2 v) { return in_bound(v.x, v.y); }
@@ -485,6 +498,12 @@ namespace T {
         GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next() {
             assert(w % K_AIRFLOW_DOWNSAMPLE == 0);
             assert(h % K_AIRFLOW_DOWNSAMPLE == 0);
+
+			pressure = new float* [height];
+			/*heat = new float* [height];*/
+			for (int i = 0; i < height; i++)pressure[i] = new float [width]();
+		/*	for (int i = 0; i < height; i++)heat[i] = new float [width]();*/
+
             airflow_solver.init(h / K_AIRFLOW_DOWNSAMPLE, w / K_AIRFLOW_DOWNSAMPLE, K_DT);
             airflow_solver.reset();
         };
