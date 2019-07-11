@@ -3,7 +3,7 @@
 #include "../../common/particle.h"
 #include <vector>
 
-namespace T {
+namespace Simflow {
 	class GameView;
 
 	class HeatReadyEventHandler : public EventHandler<const vector<ParticleInfo>&>

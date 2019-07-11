@@ -13,7 +13,7 @@ namespace Simflow {
     const float K_RESTITUTION = 0.2;
     const int K_LIQUID_ITERATIONS = 5;
 
-    const float K_HEAT_DELTA = 3.f;
+    const float K_HEAT_DELTA = 5.0f;
 
     const float EPS = 1E-6;
     const float H = 7.f;//16.f * K_LIQUID_SCALE; // kernel radius

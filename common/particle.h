@@ -35,7 +35,7 @@ namespace Simflow {
     struct ParticleInfo {
         ParticleType type = ParticleType::None;
         vec2 position = vec2();
-		float temperature = 297.15f;
+		float temperature = 25.00;
     };
 
 

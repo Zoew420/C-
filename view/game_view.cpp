@@ -266,7 +266,7 @@ Simflow::GameView::GameView()
 	on_pressure_ready = make_shared<PressureReadyEventHandler>(this);
 }
 
-void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
+void Simflow::GameView::Handler_Data(const std::vector<ParticleInfo>& particles)
 {
 	if (mode_draw == true) {
 		glLoadIdentity();
@@ -280,15 +280,15 @@ void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
 			x -= 400; y = 300 - y;
 			if (particles[i].type == ParticleType::Iron)
 			{
-				DrawPaticle(x, y, 1.0f, int(ParticleType::Iron));
+				DrawParticle(x, y, ParticleType::Iron);
 			}
 			else if (particles[i].type == ParticleType::Sand)
 			{
-				DrawPaticle(x, y, 1.0f, int(ParticleType::Sand));
+				DrawParticle(x, y, ParticleType::Sand);
 			}
 			else if (particles[i].type == ParticleType::Water)
 			{
-				DrawPaticle(x, y, 1.0f, int(ParticleType::Water));
+				DrawParticle(x, y, ParticleType::Water);
 			}
 		}
 	}
@@ -298,7 +298,7 @@ void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
 	}
 }
 
-void T::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
+void Simflow::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
 {
 	if (mode_heat == true) {
 		glLoadIdentity();
@@ -310,7 +310,7 @@ void T::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
 			float y = heat[i].position.y;
 			x -= 400; y = 300 - y;
 			float temperature = heat[i].temperature;
-			DrawHeat(x, y, 1.0f, temperature);
+			DrawHeat(x, y, temperature);
 		}
 	}
 	else
@@ -319,7 +319,7 @@ void T::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
 	}
 }
 
-void T::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressure)
+void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>> pressure)
 {
 	if (mode_pressure == true)
 	{
@@ -328,10 +328,13 @@ void T::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressu
 		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
 		int m = pressure[0].size();
 		int n = pressure.size();
-		for (int i = 0; i <= m; i++) {
-			for (int j = 0; j <= n; j++) {
-				float p = pressure[i][j];
-				DrawHeat(i, j, 1.0f, p);
+		for (int i = 0; i < m; i++) {
+			for (int j = 0; j < n; j++) {
+				float pre = pressure[i][j];
+				float x = float(i);
+				float y = float(j);
+				x -= 400; y = 300 - y;
+				DrawPressure(x, y, pre);
 			}
 		}
 	}

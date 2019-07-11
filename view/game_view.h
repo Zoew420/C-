@@ -52,7 +52,7 @@ namespace Simflow {
 		shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_heat_ready;
 		
 		//压强数据准备完毕的处理函数
-		shared_ptr<EventHandler<const vector<vector<float>>&>> on_pressure_ready;
+		shared_ptr<EventHandler<const vector<vector<float>>>> on_pressure_ready;
 		
 		GameView();
 
@@ -60,7 +60,7 @@ namespace Simflow {
 
 		void Handler_Heat(const vector<ParticleInfo>& heat);
 
-		void Handler_Pressure(const vector<vector<float>>& pressure);
+		void Handler_Pressure(const vector<vector<float>> pressure);
 
 		void UpdataParticles(const vec2& point);
 

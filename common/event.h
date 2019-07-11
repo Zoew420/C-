@@ -38,7 +38,7 @@ namespace Simflow {
 
     public:
 
-        EventSource() { cout << _handlers.size() << endl; };
+        EventSource() {}
 
         // 新增一个处理程序
         void add_handler(shared_ptr<EventHandler<Args...>> h) {
@@ -71,7 +71,6 @@ namespace Simflow {
         void trigger(Args... args) {
             cout << _handlers.size() << endl;
             for (auto& h : _handlers) {
-                cout << "!!!" << endl;
                 h->handle(args...);
             }
         }
