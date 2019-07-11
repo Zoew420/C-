@@ -10,7 +10,7 @@ inline void DrawPaticle(float x, float y, float radius, int type) {
     if (type == 2) glColor4f(1, 1, 0, 0);
     if (type == 3) {
         glColor4f(0, 1, 1, 0);
-        //radius = 3;
+        radius = 3;
     }
     glRectf(x - radius, y - radius, x + radius, y + radius);
 
