@@ -305,28 +305,28 @@ namespace T {
 
             for (int ik = 0; ik < K_LIQUID_ITERATIONS; ik++) {
                 liquid_buf.reset_lp(0);
-                for (int ip = 0; ip < state_cur.particles; ip++) {
+                //for (int ip = 0; ip < state_cur.particles; ip++) {
 
-                    if (state_cur.p_type[ip] == ParticleType::Water) {
-                        ivec2 pos = f2i(liquid_buf.p_im_pos[ip]);
-                        //ivec2 pos = f2i(state_cur.p_pos[ip]);
-                        float lp_p = 0, lp_rho = 0; // ¼ÆËãp¡¢rho
-                        iterate_neighbor_liquid(pos, r_neibor, [this, &lp_p, &lp_rho, &ip](int t_ip) {
-                            if (state_cur.p_type[ip] != ParticleType::Water) return;
+                //    if (state_cur.p_type[ip] == ParticleType::Water) {
+                //        ivec2 pos = f2i(liquid_buf.p_im_pos[ip]);
+                //        //ivec2 pos = f2i(state_cur.p_pos[ip]);
+                //        float lp_p = 0, lp_rho = 0; // ¼ÆËãp¡¢rho
+                //        iterate_neighbor_liquid(pos, r_neibor, [this, &lp_p, &lp_rho, &ip](int t_ip) {
+                //            if (state_cur.p_type[ip] != ParticleType::Water) return;
 
-                            vec2 pos_diff = liquid_buf.p_im_pos[t_ip] - liquid_buf.p_im_pos[ip];
-                            //vec2 pos_diff = state_cur.p_pos[t_ip] - state_cur.p_pos[ip];
-                            float r2 = dot(pos_diff, pos_diff);
-                            if (r2 < HSQ) {
-                                float t_mass = particle_mass(this->state_cur.p_type[t_ip]);
-                                lp_rho += t_mass * POLY6 * pow(HSQ - r2, 3.f);
-                            }
-                        });
-                        lp_p = GAS_CONST * (lp_rho - REST_DENS);
-                        liquid_buf.lp_p.push_back(lp_p);
-                        liquid_buf.lp_rho.push_back(lp_rho);
-                    }
-                }
+                //            vec2 pos_diff = liquid_buf.p_im_pos[t_ip] - liquid_buf.p_im_pos[ip];
+                //            //vec2 pos_diff = state_cur.p_pos[t_ip] - state_cur.p_pos[ip];
+                //            float r2 = dot(pos_diff, pos_diff);
+                //            if (r2 < HSQ) {
+                //                float t_mass = particle_mass(this->state_cur.p_type[t_ip]);
+                //                lp_rho += t_mass * POLY6 * pow(HSQ - r2, 3.f);
+                //            }
+                //        });
+                //        lp_p = GAS_CONST * (lp_rho - REST_DENS);
+                //        liquid_buf.lp_p.push_back(lp_p);
+                //        liquid_buf.lp_rho.push_back(lp_rho);
+                //    }
+                //}
 
                 for (int ip = 0; ip < state_cur.particles; ip++) {
                     vec2 acc = vec2();
