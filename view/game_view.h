@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 
-namespace T {
+namespace Simflow {
     using namespace std;
 
     class GameView {

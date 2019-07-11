@@ -1,7 +1,7 @@
 #include "data_ready.h"
 #include "../game_view.h"
 
-namespace T {
+namespace Simflow {
 	void DataReadyEventHandler::handle(const std::vector<ParticleInfo>& particles)
 	{
 		view->Handler(particles);

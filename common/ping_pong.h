@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-namespace T {
+namespace Simflow {
     using namespace std;
 
     template<typename T>

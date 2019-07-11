@@ -3,7 +3,7 @@
 #include "../common/particle.h"
 #include "../model/game_model.h"
 
-namespace T {
+namespace Simflow {
     using namespace std;
 
 

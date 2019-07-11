@@ -2,7 +2,7 @@
 #include <variant>
 #include "../glm/glm.hpp"
 
-namespace T {
+namespace Simflow {
     using namespace std;
     using namespace glm;
 

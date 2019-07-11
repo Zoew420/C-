@@ -1,7 +1,7 @@
 #pragma once
 #include "../glm/glm.hpp"
 
-namespace T {
+namespace Simflow {
     using namespace glm;
 
     inline int random_sample(int from_inclusive, int to_inclusive) {

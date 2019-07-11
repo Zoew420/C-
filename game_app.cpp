@@ -2,8 +2,8 @@
 #include "view/game_view.h"
 #include "view_model/game_view_model.h"
 
-using namespace T;
-const int msize = 256;
+using namespace Simflow;
+const int msize = 512;
 int main() {
 	GameWindow win;
     GameModel gm(msize, msize);

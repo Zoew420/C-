@@ -3,7 +3,7 @@
 #include <memory>
 #include <functional>
 #include <iostream>
-namespace T {
+namespace Simflow {
     using namespace std;
 
 

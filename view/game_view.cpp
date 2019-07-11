@@ -6,7 +6,7 @@ static void glfw_error_callback(int error, const char* description)
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-T::GameWindow::GameWindow() {
+Simflow::GameWindow::GameWindow() {
 	//错误回调函数
 	glfwSetErrorCallback(glfw_error_callback);
 	//初始化GLFW
@@ -63,7 +63,7 @@ T::GameWindow::GameWindow() {
 
 }
 
-T::GameWindow::~GameWindow()
+Simflow::GameWindow::~GameWindow()
 {
 	// Cleanup
 	ImGui_ImplOpenGL3_Shutdown();
@@ -87,7 +87,7 @@ static void HelpMarker(const char* desc)
 	}
 }
 
-void T::GameWindow::OnCreate()
+void Simflow::GameWindow::OnCreate()
 {
 	bool show_state_choice = true;
 	bool show_brush_choice = true;
@@ -212,7 +212,7 @@ void T::GameWindow::OnCreate()
 	}
 }
 
-void T::GameWindow::MouseClickEvent()
+void Simflow::GameWindow::MouseClickEvent()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	glLoadIdentity();
@@ -231,7 +231,7 @@ void T::GameWindow::MouseClickEvent()
 	}
 }
 
-T::GameView::GameView()
+Simflow::GameView::GameView()
 {
 	draw_iron = false;
 	draw_sand = false;
@@ -245,7 +245,7 @@ T::GameView::GameView()
 	on_data_ready = make_shared<DataReadyEventHandler>(this);
 }
 
-void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
+void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
 {
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
@@ -256,22 +256,11 @@ void T::GameView::Handler(const std::vector<ParticleInfo>& particles)
 		float x = particles[i].position.x;
 		float y = particles[i].position.y;
 		x -= 400; y = 300 - y;
-		if (particles[i].type == ParticleType::Iron)
-		{
-			DrawPaticle(x, y, 1.0f, int(ParticleType::Iron));
-		}
-		else if (particles[i].type == ParticleType::Sand)
-		{
-			DrawPaticle(x, y, 1.0f, int(ParticleType::Sand));
-		}
-		else if (particles[i].type == ParticleType::Water) 
-		{
-			DrawPaticle(x, y, 1.0f, int(ParticleType::Water));
-		}
+        DrawParticle(x, y, particles[i].type);
 	}
 }
 
-void T::GameView::UpdataParticles(const glm::vec2 & point)
+void Simflow::GameView::UpdataParticles(const glm::vec2 & point)
 {
 	ParticleBrush b;
 	if (draw_iron) b.type = ParticleType::Iron;
@@ -284,7 +273,7 @@ void T::GameView::UpdataParticles(const glm::vec2 & point)
 	event_new_particles.trigger(b);
 }
 
-void T::GameView::UpdataParticlesHeat(const glm::vec2 & point)
+void Simflow::GameView::UpdataParticlesHeat(const glm::vec2 & point)
 {
 	HeatBrush h;
 	if (brush_1pix) h.radius = 1.0f;

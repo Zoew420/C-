@@ -1,7 +1,7 @@
 #pragma once
 #include "../glm/glm.hpp"
 
-namespace T {
+namespace Simflow {
     using namespace glm;
     const int K_AIRFLOW_DOWNSAMPLE = 4;
     const int K_LIQUID_DOWNSAMPLE = 8;

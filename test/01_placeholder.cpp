@@ -13,7 +13,7 @@ TEST_CASE(model_simplistic_test) {
     return;
 
 
-    using namespace T;
+    using namespace Simflow;
     GameModel gm(msize, msize);
 
 

@@ -1,7 +1,7 @@
 #include "my3dpresent.h"
 #include "../model/game_model.h"
 
-using namespace T;
+using namespace Simflow;
 const int msize = 100;
 int map[msize][msize];
 
