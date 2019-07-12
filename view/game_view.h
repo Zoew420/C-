@@ -9,9 +9,6 @@
 #include "imgui/glew/GL/glew.h"
 #include "imgui/glfw/include/GLFW/glfw3.h"
 #include "event_handler/frame_ready.h"
-//#include "event_handler/data_ready.h"
-//#include "event_handler/heat_ready.h"
-//#include "event_handler/pressure_ready.h"
 #include "gl_util.h"
 #include "draw_particle.h"
 #include <iostream>
@@ -20,7 +17,6 @@
 
 namespace Simflow {
     using namespace std;
-
 
     class PressureGraphRenderer {
         GLuint framebuffer = -1;
@@ -51,59 +47,68 @@ namespace Simflow {
     };
 
 
-
     class GameView {
     protected:
+		/*压强图的纹理*/
         unique_ptr<PressureGraphRenderer> pressure_graph = nullptr;
 
+		/*绘制沙子与绘制固体的bool值*/
+		bool draw_sand;
+		bool draw_iron;
+		bool draw_water;
+
+		/*画笔大小的选择*/
+		bool brush_1pix;
+		bool brush_5pix;
+		bool brush_10pix;
+
+		/*画笔功能的选择*/
+		bool draw;
+		bool inc_heat;
+		bool dec_heat;
+
+		/*窗口模式设定*/
+		bool mode_draw;
+		bool mode_heat;
+		bool mode_pressure;
+
+		/*更新ParticleBrush*/
+		void UpdataParticles(const vec2& point);
+
+		/*更新HeatBrush*/
+		void UpdataParticlesHeat(const vec2& point);
+
     public:
-        /*绘制沙子与绘制固体的bool值*/
-        bool draw_sand;
-        bool draw_iron;
-        bool draw_water;
-        /*画笔大小的选择*/
-        bool brush_1pix;
-        bool brush_5pix;
-        bool brush_10pix;
-        /*画笔功能的选择*/
-        bool draw;
-        bool inc_heat;
-        bool dec_heat;
-        /*窗口模式设定*/
-        bool mode_draw;
-        bool mode_heat;
-        bool mode_pressure;
+		/*GLF窗口*/
+		GLFWwindow* window;
 
         // 更新事件源（View通知ViewModel进行逻辑更新）
         EventSource<> event_update;
 
-        // TODO: 新的事件源，包含一帧内的所有数据
+        // 新的事件源，包含一帧内的所有数据
         EventSource<FrameData> event_frame_ready;
 
-        // 绘制新粒子事件源（View通知ViewModel绘制新粒子）
+        // 绘制新粒子事件源
         EventSource<ParticleBrush> event_new_particles;
 
         // 改变温度事件源
         EventSource<HeatBrush> event_change_heat;
 
+		//framedata处理事件指针
         shared_ptr<EventHandler<FrameData>> on_frame_ready;
 
         GameView();
 
+		~GameView();
+		
+		//framedata处理事件
         void Handler(FrameData data);
 
-        void UpdataParticles(const vec2& point);
+		//构造窗口环境
+		void OnCreate();
 
-        void UpdataParticlesHeat(const vec2& point);
-    };
-
-    class GameWindow : public GameView {
-    public:
-        GLFWwindow* window;
-        GameWindow();
-        ~GameWindow();
-        void OnCreate();
-        void MouseClickEvent();
+		//鼠标点击事件处理
+		void MouseClickEvent();
     };
 }
 

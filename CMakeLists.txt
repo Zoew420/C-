@@ -10,9 +10,6 @@ set(src
 	view/game_view
 	view/draw_particle
 	view/event_handler/frame_ready
-	#view/event_handler/data_ready
-	#view/event_handler/heat_ready
-	#view/event_handler/pressure_ready
 	view_model/game_view_model
 )
 
@@ -32,18 +29,14 @@ set(targets
 	Visualizer
 )
 
-add_compile_options(/fp:fast)
-add_compile_options(/arch:SSE2)
-
 add_subdirectory(view/imgui)
 
 add_executable (TestEntry ${src} ${tests})
 add_executable (Game "game_app.cpp" ${src})
 add_executable (Visualizer ${src} ${src_visualizer})
 
-
 foreach(tg ${targets})
 	set_property(TARGET ${tg} PROPERTY CXX_STANDARD 17)
 	target_link_libraries(${tg} ImGui)
-	#set_target_properties(${tg} PROPERTIES LINK_FLAGS "/PROFILE")
+	set_target_properties(${tg} PROPERTIES LINK_FLAGS "/PROFILE")
 endforeach()
