@@ -90,16 +90,17 @@ namespace Simflow {
 
 
         int width, height;
-		float ** pressure;
-		/*float ** heat;*/
+        float** pressure;
+        /*float ** heat;*/
 
-		float ** query_pressure() {
-			for (int i = 0; i < height; i++) {
-				for (int j = 0; j < width; j++)
-					pressure[i][j] = airflow_solver.p[idx_air(i,j)];
-			}
-			return pressure;
-		}
+        float** query_pressure() {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    pressure[i][j] = bilinear_sample_air_p(ivec2(i, j));
+                }
+            }
+            return pressure;
+        }
 
 
         bool in_bound(int c, int r) { return r >= 0 && r < height && c >= 0 && c < width; }
@@ -124,24 +125,35 @@ namespace Simflow {
             }
         }
 
-        vec2 safe_sample_air(ivec2 p_air) {
+        int safe_air_idx(ivec2 p_air) {
             if (p_air.x < 0) p_air.x = 0;
             if (p_air.x >= width / K_AIRFLOW_DOWNSAMPLE) p_air.x = width / K_AIRFLOW_DOWNSAMPLE - 1;
             if (p_air.y < 0) p_air.y = 0;
             if (p_air.y >= height / K_AIRFLOW_DOWNSAMPLE) p_air.y = height / K_AIRFLOW_DOWNSAMPLE - 1;
-            int im_air = p_air.y * (width / K_AIRFLOW_DOWNSAMPLE) + p_air.x;
+            return p_air.y * (width / K_AIRFLOW_DOWNSAMPLE) + p_air.x;
+        }
+
+        vec2 safe_sample_air_v(ivec2 p_air) {
+            int im_air = safe_air_idx(p_air);
             return vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
         }
 
-        vec2 bilinear_sample_air(ivec2 pos) {
+        float safe_sample_air_p(ivec2 p_air) {
+            int im_air = safe_air_idx(p_air);
+            return airflow_solver.p[im_air];
+        }
+
+        template<typename F>
+        auto bilinear_sample_air(ivec2 pos, F& f) -> decltype(f(ivec2())) {
+            using T = decltype(f(ivec2()));
             pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
             ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
             vec2 fr = glm::fract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
-            vec2 p[4] = {
-                safe_sample_air(base),
-                safe_sample_air(base + ivec2(1,0)),
-                safe_sample_air(base + ivec2(0,1)),
-                safe_sample_air(base + ivec2(1,1))
+            T p[4] = {
+                f(base),
+                f(base + ivec2(1,0)),
+                f(base + ivec2(0,1)),
+                f(base + ivec2(1,1))
             };
             float w[4] = {
                 (1 - fr.x) * (1 - fr.y),
@@ -149,11 +161,19 @@ namespace Simflow {
                 (1 - fr.x) * fr.y,
                 fr.x * fr.y
             };
-            vec2 sum = vec2();
+            T sum = T();
             for (int i = 0; i < 4; i++) {
                 sum += p[i] * w[i];
             }
             return sum;
+        }
+
+        vec2 bilinear_sample_air_v(ivec2 pos) {
+            return bilinear_sample_air(pos, [this](ivec2 pos) { return safe_sample_air_v(pos); });
+        }
+
+        float bilinear_sample_air_p(ivec2 pos) {
+            return bilinear_sample_air(pos, [this](ivec2 pos) { return safe_sample_air_p(pos); });
         }
 
 
@@ -226,7 +246,7 @@ namespace Simflow {
             int im = idx(ipos);
             int im_air = idx_air(ipos);
 
-            vec2 v_air = bilinear_sample_air(ipos);
+            vec2 v_air = bilinear_sample_air_v(ipos);
 
             vec2 v_p = state_cur.p_vel[ip]; // particle velocity
             vec2 v_rel = v_p - v_air; // relative velocity
@@ -647,10 +667,10 @@ namespace Simflow {
             assert(w % K_LIQUID_DOWNSAMPLE == 0);
             assert(h % K_LIQUID_DOWNSAMPLE == 0);
 
-			pressure = new float* [height];
-			/*heat = new float* [height];*/
-			for (int i = 0; i < height; i++)pressure[i] = new float [width]();
-		/*	for (int i = 0; i < height; i++)heat[i] = new float [width]();*/
+            pressure = new float* [height];
+            /*heat = new float* [height];*/
+            for (int i = 0; i < height; i++)pressure[i] = new float[width]();
+            /*	for (int i = 0; i < height; i++)heat[i] = new float [width]();*/
 
             airflow_solver.init(h / K_AIRFLOW_DOWNSAMPLE, w / K_AIRFLOW_DOWNSAMPLE, K_DT);
             airflow_solver.reset();
