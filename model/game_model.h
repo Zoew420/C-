@@ -1,7 +1,7 @@
 #pragma once
 #include "../common/particle.h"
 #include "../common/event.h"
-#include "../common/ping_pong.h"
+#include "../common/array2d.h"
 #include "air_solver.h"
 #include "constant.h"
 #include <algorithm>
@@ -84,13 +84,13 @@ namespace Simflow {
 
 
         int width, height;
-        float** pressure;
+        Array2D<float> pressure;
         /*float ** heat;*/
 
-        float** query_pressure() {
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    pressure[i][j] = bilinear_sample_air_p(ivec2(i, j));
+        const Array2D<float>& query_pressure() {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    pressure[j][i] = bilinear_sample_air_p(ivec2(i, j));
                 }
             }
             return pressure;
@@ -122,7 +122,7 @@ namespace Simflow {
 
 #pragma region 温度计算
 
-        float average_heat(const vector<float>& heat, ivec2 ipos_near, float& weight) {
+        float average_heat(const vector<float> & heat, ivec2 ipos_near, float& weight) {
             weight = 0.0;
             if (in_bound(ipos_near)) {//是否在画布里
                 int im1 = idx(ipos_near);//得到它在画布上的index
@@ -157,7 +157,7 @@ namespace Simflow {
             }
         } heat_buf;
 
-        
+
         void compute_heat() {
             heat_buf.reset(state_cur.particles);
             for (int ip = 0; ip < state_cur.particles; ip++) {
@@ -188,7 +188,7 @@ namespace Simflow {
                         w_sum += w[i];
                         wt_sum += w[i] * t[i];
                     }
-                    float delt_t = w_sum > 0.0f ? (wt_sum / (w_sum)- heat_buf.im_heat0[ip]) : 0;
+                    float delt_t = w_sum > 0.0f ? (wt_sum / (w_sum)-heat_buf.im_heat0[ip]) : 0;
                     heat_buf.im_heat[ip] = K_DT / K_HEAT_ITERATIONS * particle_diff(state_cur.p_type[ip]) * delt_t + heat_buf.im_heat0[ip];
                 }
             }
@@ -680,15 +680,15 @@ namespace Simflow {
 #pragma endregion
 
     public:
-        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next() {
+        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next(), pressure(h, w) {
             assert(w % K_AIRFLOW_DOWNSAMPLE == 0);
             assert(h % K_AIRFLOW_DOWNSAMPLE == 0);
             assert(w % K_LIQUID_GRID_DOWNSAMPLE == 0);
             assert(h % K_LIQUID_GRID_DOWNSAMPLE == 0);
 
-            pressure = new float* [height];
-            /*heat = new float* [height];*/
-            for (int i = 0; i < height; i++)pressure[i] = new float[width]();
+            //pressure = new float* [height];
+            ///*heat = new float* [height];*/
+            //for (int i = 0; i < height; i++)pressure[i] = new float[width]();
             /*	for (int i = 0; i < height; i++)heat[i] = new float [width]();*/
 
             airflow_solver.init(h / K_AIRFLOW_DOWNSAMPLE, w / K_AIRFLOW_DOWNSAMPLE, K_DT);

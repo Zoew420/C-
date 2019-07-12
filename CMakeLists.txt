@@ -1,7 +1,9 @@
 cmake_minimum_required (VERSION 3.10)
 
 set(src
+	common/array2d
 	common/event
+	common/parameter
 	common/particle
 	model/game_model
 	model/air_solver

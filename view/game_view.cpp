@@ -318,7 +318,7 @@ void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>>& 
 		int n = pressure.size();
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n; j++) {
-				float p = pressure[i][j];
+				float p = pressure[j][i];
                 int x = i , y = 300 - j;
 				DrawPressure(x, y, p);
 			}
