@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "../common/particle.h"
 #include "../common/event.h"
 #include "../common/array2d.h"
@@ -14,7 +14,7 @@
 namespace Simflow {
     using namespace std;
 
-    // Ê¾Òâ´úÂë
+    // ç¤ºæ„ä»£ç 
     template<int width, int height>
     class GameModel {
     public:
@@ -22,7 +22,7 @@ namespace Simflow {
 
         AirSolver airflow_solver;
 
-        // ¼ÇÂ¼Ò»¸öÏñËØµãÄÚÈ«²¿µÄÁ£×Ó
+        // è®°å½•ä¸€ä¸ªåƒç´ ç‚¹å†…å…¨éƒ¨çš„ç²’å­
         struct PixelParticleList {
             int from = -1, to = -1;
             bool nil() { return from < 0; }
@@ -50,7 +50,7 @@ namespace Simflow {
 
         struct StateCur {
             int particles = 0;
-            vector<PixelParticleList> map_index; // »­²¼Ä³¸öÎ»ÖÃµÄÁ£×ÓÏÂ±ê map_index[idx(r,c)]
+            vector<PixelParticleList> map_index; // ç”»å¸ƒæŸä¸ªä½ç½®çš„ç²’å­ä¸‹æ ‡ map_index[idx(r,c)]
             vector<BlockLiquidList> map_block_liquid;
             vector<ParticleType> p_type;
             vector<float> p_heat;
@@ -113,14 +113,14 @@ namespace Simflow {
         }
 
 
-#pragma region ÎÂ¶È¼ÆËã
+#pragma region æ¸©åº¦è®¡ç®—
 
         float average_heat(const vector<float> & heat, ivec2 ipos_near, float& weight) {
             weight = 0.0;
-            if (in_bound(ipos_near)) {//ÊÇ·ñÔÚ»­²¼Àï
-                int im1 = idx(ipos_near);//µÃµ½ËüÔÚ»­²¼ÉÏµÄindex
-                PixelParticleList& list = state_cur.map_index[im1];//ÕÒµ½¸ÃÏñËØµãµÄËùÓĞÁ£×Ó±àºÅ
-                if (!list.nil()) {//¸ÃÏñËØµã²»Îª¿Õ
+            if (in_bound(ipos_near)) {//æ˜¯å¦åœ¨ç”»å¸ƒé‡Œ
+                int im1 = idx(ipos_near);//å¾—åˆ°å®ƒåœ¨ç”»å¸ƒä¸Šçš„index
+                PixelParticleList& list = state_cur.map_index[im1];//æ‰¾åˆ°è¯¥åƒç´ ç‚¹çš„æ‰€æœ‰ç²’å­ç¼–å·
+                if (!list.nil()) {//è¯¥åƒç´ ç‚¹ä¸ä¸ºç©º
                     float avg = 0.0f;
                     for (int i = list.from; i <= list.to; i++) {
                         avg += heat[i];
@@ -157,8 +157,8 @@ namespace Simflow {
                 heat_buf.im_heat[ip] = state_cur.p_heat[ip];
             }
 
-            // ¶ÔÓÚÃ¿¸öÁ£×Ó£¬²éÕÒÆä¸½½üµÄÁ£×Ó£¬¼ÆËãÏÂÒ»Ö¡µÄÎÂ¶È
-            //¶ÔÓÚÃ¿¸öÁ£×Ó£¬¼ÆËãÆäÎÂ¶È¼ò»¯ÎªÆä×ÔÉíÎÂ¶ÈºÍ¼ÓÉÏÉÏÏÂ×óÓÒÁ£×ÓÎÂ¶È²îÖµµÄÆ½¾ùÖµ
+            // å¯¹äºæ¯ä¸ªç²’å­ï¼ŒæŸ¥æ‰¾å…¶é™„è¿‘çš„ç²’å­ï¼Œè®¡ç®—ä¸‹ä¸€å¸§çš„æ¸©åº¦
+            //å¯¹äºæ¯ä¸ªç²’å­ï¼Œè®¡ç®—å…¶æ¸©åº¦ç®€åŒ–ä¸ºå…¶è‡ªèº«æ¸©åº¦å’ŒåŠ ä¸Šä¸Šä¸‹å·¦å³ç²’å­æ¸©åº¦å·®å€¼çš„å¹³å‡å€¼
             for (int ik = 0; ik < K_HEAT_ITERATIONS; ik++) {
                 heat_buf.swap();
 
@@ -193,7 +193,7 @@ namespace Simflow {
 
 #pragma endregion
 
-#pragma region ËÙ¶È¼ÆËã
+#pragma region é€Ÿåº¦è®¡ç®—
 
         void compute_vel() {
             //compute_vel_basic();
@@ -294,8 +294,8 @@ namespace Simflow {
         }
 
         void compute_vel_all() {
-            // 1. ËùÓĞÁ£×Ó¼ÆËãSPHÓ¦Á¦£¨ÓÅ»¯£ºÒºÌå¸½½üÁ£×Ó£©
-            // 2. ¸÷¸öÁ£×Ó¼ÓËÙ¶ÈÀÛ¼Óµ½state_nextÉÏ
+            // 1. æ‰€æœ‰ç²’å­è®¡ç®—SPHåº”åŠ›ï¼ˆä¼˜åŒ–ï¼šæ¶²ä½“é™„è¿‘ç²’å­ï¼‰
+            // 2. å„ä¸ªç²’å­åŠ é€Ÿåº¦ç´¯åŠ åˆ°state_nextä¸Š
             int r_neibor = f2i(ceilf(K_LIQUID_RADIUS));
             liquid_buf.reset_p(state_cur.particles);
 
@@ -340,8 +340,8 @@ namespace Simflow {
 
                         float r = length(pos_diff);
                         if (r <= 0.01) {
-                            // ·ÀÖ¹normalizeÁãÏòÁ¿
-                            // ´Ë´¦Ëæ»ú¸øÒ»¸ö·½Ïò
+                            // é˜²æ­¢normalizeé›¶å‘é‡
+                            // æ­¤å¤„éšæœºç»™ä¸€ä¸ªæ–¹å‘
                             pos_diff = vec2(random(-1, 1), random(-1, 1));
                         }
                         if (r < K_LIQUID_RADIUS)
@@ -374,7 +374,7 @@ namespace Simflow {
 
 #pragma endregion
 
-#pragma region ÆøÁ÷
+#pragma region æ°”æµ
 
         //int myclamp(int v, int min, int max) {
         //    v = v < min ? min : v;
@@ -461,7 +461,7 @@ namespace Simflow {
 
 #pragma endregion
 
-#pragma region ÔË¶¯¼°Åö×²¼ì²â
+#pragma region è¿åŠ¨åŠç¢°æ’æ£€æµ‹
 
         struct CollisionDetectionResult {
             vec2 pos;
@@ -478,14 +478,14 @@ namespace Simflow {
             int steps = length(end - start) / K_COLLISION_STEP_LENGTH;
 
             vec2 delta = normalize(end - start) * K_COLLISION_STEP_LENGTH;
-            vec2 cur = start;//ÅÅ³ıËùÔÚµÄµÚÒ»¸öÎ»ÖÃ£¬´ÓµÚ¶ş¸ö¿ªÊ¼
+            vec2 cur = start;//æ’é™¤æ‰€åœ¨çš„ç¬¬ä¸€ä¸ªä½ç½®ï¼Œä»ç¬¬äºŒä¸ªå¼€å§‹
 
-            // Ìø³öµ±Ç°ÏñËØ
+            // è·³å‡ºå½“å‰åƒç´ 
             while (f2i(cur) == f2i(start)) {
                 cur += delta;
             }
 
-            if (steps <= 1)//Èç¹û²»ÂúÒ»¸ñ»ò¸ÕºÃÒ»¸ñ£¬È¡end×öÅĞ¶Ï
+            if (steps <= 1)//å¦‚æœä¸æ»¡ä¸€æ ¼æˆ–åˆšå¥½ä¸€æ ¼ï¼Œå–endåšåˆ¤æ–­
             {
                 if (!in_bound(f2i(cur))) {
                     final_pos = cur;
@@ -530,7 +530,7 @@ namespace Simflow {
         }
 
         void compute_position() {
-            // ¸üĞÂÎ»ÖÃ£¬Åö×²¼ì²â
+            // æ›´æ–°ä½ç½®ï¼Œç¢°æ’æ£€æµ‹
             for (int ip = 0; ip < state_cur.particles; ip++) {
                 ParticleType cur_type = state_cur.p_type[ip];
                 if (cur_type == ParticleType::Iron) continue;
@@ -580,13 +580,13 @@ namespace Simflow {
         }
 #pragma endregion
 
-#pragma region Íê³ÉÖ¡
+#pragma region å®Œæˆå¸§
         struct ReorderBuffer {
-            vector<int> p_idx; // ¼ÇÂ¼¸÷¸öÁ£×Ó¶ÔÓ¦µÄ»­²¼ÏÂ±ê
-            vector<int> sort; // ³õÊ¼Ê±Îª0..particles-1£¬¸ù¾İ»­²¼ÏÂ±êÅÅĞò
+            vector<int> p_idx; // è®°å½•å„ä¸ªç²’å­å¯¹åº”çš„ç”»å¸ƒä¸‹æ ‡
+            vector<int> sort; // åˆå§‹æ—¶ä¸º0..particles-1ï¼Œæ ¹æ®ç”»å¸ƒä¸‹æ ‡æ’åº
         } reorder_buf;
 
-        // Íê³ÉStateNextµÄËùÓĞ¼ÆËã£¬½«½á¹ûÊÕ¼¯µ½StateCurÖĞ
+        // å®ŒæˆStateNextçš„æ‰€æœ‰è®¡ç®—ï¼Œå°†ç»“æœæ”¶é›†åˆ°StateCurä¸­
         void complete() {
             reorder_buf.p_idx.clear();
             reorder_buf.sort.clear();
@@ -605,7 +605,7 @@ namespace Simflow {
             sort(reorder_buf.sort.begin(), reorder_buf.sort.end(), [&p_idx](int i1, int i2) { return p_idx[i1] < p_idx[i2]; });
 
             int n_new = reorder_buf.sort.size();
-            // Ê¹ÓÃ¸Õ²ÅµÄStateNext£¬Éú³ÉÏÂÒ»¸öStateCur
+            // ä½¿ç”¨åˆšæ‰çš„StateNextï¼Œç”Ÿæˆä¸‹ä¸€ä¸ªStateCur
 
             state_cur.reset(n_new);
             for (int ip = 0; ip < n_new; ip++) {
@@ -613,13 +613,13 @@ namespace Simflow {
                 if (old_ip == 59) {
                     int a = 1;
                 }
-                // ¸´ÖÆÊı¾İ
+                // å¤åˆ¶æ•°æ®
                 vec2 pos = state_next.p_pos[old_ip];
                 state_cur.p_pos[ip] = pos;
                 state_cur.p_type[ip] = state_next.p_type[old_ip];
                 state_cur.p_vel[ip] = state_next.p_vel[old_ip];
                 state_cur.p_heat[ip] = state_next.p_heat[old_ip];
-                // ¹¹Ôì»­²¼Ë÷Òı
+                // æ„é€ ç”»å¸ƒç´¢å¼•
                 PixelParticleList& cur_lst = state_cur.map_index[idx(f2i(pos))];
                 cur_lst.append(ip);
 
@@ -632,11 +632,11 @@ namespace Simflow {
         }
 #pragma endregion
 
-#pragma region ½»»¥
+#pragma region äº¤äº’
 
         ParticleBrush cur_particle_brush;
         void handle_new_particles() {
-            // À©´óÊı×é£¬½«ĞÂÁ£×Ó×·¼Óµ½state_nextÎ²²¿
+            // æ‰©å¤§æ•°ç»„ï¼Œå°†æ–°ç²’å­è¿½åŠ åˆ°state_nextå°¾éƒ¨
             if (cur_particle_brush.type != ParticleType::None) {
                 ivec2 center = f2i(cur_particle_brush.center);
                 int r_find = cur_particle_brush.radius + 1;
