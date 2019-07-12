@@ -21,13 +21,13 @@ namespace Simflow {
 
 	inline float particle_diff(ParticleType type) {
 		if (type == ParticleType::Iron) {
-			return 2.2 / 100000 * 100000;
+			return 2.2 / 100000 * 2E+6;
 		}
 		else if (type == ParticleType::Sand) {
-			return 9.02 / 10000000;
+			return 9.02 / 10000000 * 2E+6;
 		}
 		else if (type == ParticleType::Water) {
-			return 2.78 / 10000000;
+			return 2.78 / 10000000 * 2E+6;
 		}
 	}
 
