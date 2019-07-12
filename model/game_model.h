@@ -120,7 +120,7 @@ namespace Simflow {
                 state_next.p_type[i] = state_cur.p_type[i];
                 state_next.p_pos[i] = state_cur.p_pos[i];
                 state_next.p_vel[i] = state_cur.p_vel[i];
-                state_next.p_heat[i] = state_next.p_heat[i];
+                state_next.p_heat[i] = state_cur.p_heat[i];
             }
         }
 
@@ -157,7 +157,7 @@ namespace Simflow {
         }
 
 
-        float average_heat(ivec2 ipos_near) {
+        float average_heat(ivec2 ipos_near, float& weight) {
             if (in_bound(ipos_near)) {//是否在画布里
                 int im1 = idx(ipos_near);//得到它在画布上的index
                 PixelParticleList& list = state_cur.map_index[im1];//找到该像素点的所有粒子编号
@@ -166,15 +166,18 @@ namespace Simflow {
                     for (int i = list.from; i <= list.to; i++) {
                         avg += state_cur.p_heat[i];
                     }
-                    avg /= (list.to - list.from);
+                    avg /= (list.to - list.from + 1);
+					weight = 1;
                     return avg;
                 }
                 else {
-                    return 0;
+					weight = 0;
+                    return 25.00;
                 }
             }
             else {
-                return 0;
+				weight = 0;
+                return 25.00;
             }
         }
 
@@ -191,12 +194,13 @@ namespace Simflow {
                 ivec2 ipos2 = ivec2(ipos.x, ipos.y + 1);
                 ivec2 ipos3 = ivec2(ipos.x - 1, ipos.y);
                 ivec2 ipos4 = ivec2(ipos.x + 1, ipos.y);
-                float t1 = average_heat(ipos1);
-                float t2 = average_heat(ipos2);
-                float t3 = average_heat(ipos3);
-                float t4 = average_heat(ipos4);
+				float w[4];
+                float t1 = average_heat(ipos1, w[0]);
+                float t2 = average_heat(ipos2, w[1]);
+                float t3 = average_heat(ipos3, w[2]);
+                float t4 = average_heat(ipos4, w[3]);
                 float delt_t = t1 + t2 + t3 + t4 - 4 * state_cur.p_heat[ip];
-                state_cur.p_heat[ip] = K_DT * particle_diff(state_cur.p_type[ip]) * delt_t + state_cur.p_heat[ip];
+                state_next.p_heat[ip] = K_DT * particle_diff(state_cur.p_type[ip]) * delt_t + state_cur.p_heat[ip];
             }
         }
 
@@ -608,7 +612,7 @@ namespace Simflow {
                                 state_next.p_pos.push_back(vec2(x, y) + jitter);
                                 state_next.p_type.push_back(cur_particle_brush.type);
                                 state_next.p_vel.push_back(vec2());
-                                state_next.p_heat.push_back(0);
+                                state_next.p_heat.push_back(25.00);
                             }
                         }
                     }

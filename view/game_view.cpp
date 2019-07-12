@@ -105,7 +105,7 @@ void Simflow::GameWindow::OnCreate()
 
 		if (show_menu) {
 			ImGui::SetNextWindowPos(ImVec2(0, 5), ImGuiCond_Appearing);
-			ImGui::Begin("Brush Function Choose:", &show_menu, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Begin("Brush Function Choose:", &show_menu, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			if (ImGui::BeginMenuBar())
 			{
 				if (ImGui::BeginMenu("Mode Setting")) {
@@ -228,7 +228,7 @@ void Simflow::GameWindow::OnCreate()
 
 void Simflow::GameWindow::MouseClickEvent()
 {
-	if (mode_draw == true) {
+	if (mode_draw == true || mode_heat == true || mode_pressure == true) {
 		ImGuiIO& io = ImGui::GetIO();
 		glLoadIdentity();
 		glMatrixMode(GL_MODELVIEW);
@@ -268,13 +268,12 @@ Simflow::GameView::GameView()
 
 void Simflow::GameView::Handler_Data(const std::vector<ParticleInfo>& particles)
 {
-	if (mode_draw == true) {
+	if (mode_draw == true || mode_heat == true || mode_pressure == true) {
 		glLoadIdentity();
 		glMatrixMode(GL_MODELVIEW);
 		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
 		for (int i = 0; i < particles.size(); i++)
 		{
-
 			float x = particles[i].position.x;
 			float y = particles[i].position.y;
 			x -= 400; y = 300 - y;
@@ -317,10 +316,10 @@ void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>>& 
 		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
 		int m = pressure[0].size();
 		int n = pressure.size();
-		for (int i = 0; i <= m; i++) {
-			for (int j = 0; j <= n; j++) {
+		for (int i = 0; i < m; i++) {
+			for (int j = 0; j < n; j++) {
 				float p = pressure[i][j];
-				DrawHeat(i, j, p);
+				DrawPressure(i, j, p);
 			}
 		}
 	}
