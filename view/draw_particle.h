@@ -1,16 +1,14 @@
 #include <iostream>
-#include "imgui/glew/GL/glew.h"
-#define max_tep 1773.15f
-#define min_tep 0.00f
-#define max_pre 1.00f
-#define min_pre -1.00f
 #include "../common/particle.h"
-#define PI 3.14159265358979323846
+#include "imgui/glew/GL/glew.h"
+#define max_tep 125.00
+#define min_tep -100.00
+#define max_pre 1.00
+#define min_pre -1.00
 
 using namespace Simflow;
 
 inline void DrawParticle(float x, float y, ParticleType type) {
-    // 画圆有点降FPS，暂时改成方形
     float radius = 1;
     switch (type)
     {
@@ -27,12 +25,12 @@ inline void DrawParticle(float x, float y, ParticleType type) {
         default:
             break;
     }
-
     glRectf(x - radius, y - radius, x + radius, y + radius);
 }
 
-inline void DrawHeat(float x, float y, float radius, float temperature) 
+inline void DrawHeat(float x, float y, float temperature) 
 {
+	int radius = 1.0f;
 	if (temperature > max_tep) temperature = max_tep;
 	if (temperature < min_tep) temperature = min_tep;
 	enum class degree
@@ -46,13 +44,13 @@ inline void DrawHeat(float x, float y, float radius, float temperature)
 		hot_high = 6
 	};
 	degree type;
-	if (temperature >= min_tep && temperature <= min_tep + 150.00f) type = degree::cold_high;
-	else if (temperature >= min_tep + 150.00f && temperature <= min_tep + 230.00f) type = degree::cold_medium;
-	else if (temperature >= min_tep + 230.00f && temperature <= min_tep + 288.00f) type = degree::cold_light;
-	else if (temperature >= min_tep + 288.00f && temperature <= min_tep + 293.00f) type = degree::comfort;
-	else if (temperature >= min_tep + 293.00f && temperature <= min_tep + 600.00f) type = degree::hot_light;
-	else if (temperature >= min_tep + 600.00f && temperature <= min_tep + 1200.00f) type = degree::hot_medium;
-	else if (temperature >= min_tep + 1200.00f) type = degree::hot_high;
+	if (temperature >= min_tep && temperature <= min_tep + 35.00f) type = degree::cold_high;
+	else if (temperature >= min_tep + 35.00f && temperature <= min_tep + 70.00f) type = degree::cold_medium;
+	else if (temperature >= min_tep + 70.00f && temperature <= min_tep + 115.00f) type = degree::cold_light;
+	else if (temperature >= min_tep + 115.00f && temperature <= min_tep + 125.00f) type = degree::comfort;
+	else if (temperature >= min_tep + 125.00f && temperature <= min_tep + 155.00f) type = degree::hot_light;
+	else if (temperature >= min_tep + 155.00f && temperature <= min_tep + 185.00f) type = degree::hot_medium;
+	else if (temperature >= min_tep + 185.00f) type = degree::hot_high;
 	int choice = (int)type;
 	if (choice == 0) glColor3ub(25, 25, 112);
 	else if (choice == 1) glColor3ub(30, 144, 255);
@@ -64,10 +62,11 @@ inline void DrawHeat(float x, float y, float radius, float temperature)
 	glRectf(x - radius, y - radius, x + radius, y + radius);
 }
 
-inline void DrawPressure(float x, float y, float radius, float pressure)
+inline void DrawPressure(float x, float y, float p)
 {
-	if (pressure > max_pre) pressure = max_pre;
-	if (pressure < min_pre) pressure = min_pre;
+	int radius = 1.0f;
+	if (p > max_pre) p = max_pre;
+	if (p < min_pre) p = min_pre;
 	enum class degree 
 	{
 		low_high = 0,
@@ -79,13 +78,13 @@ inline void DrawPressure(float x, float y, float radius, float pressure)
 		high_high = 6
 	};
 	degree type;
-	if (pressure >= min_pre && pressure <= min_pre + 0.30f) type = degree::low_high;
-	else if (pressure >= min_pre + 0.30f && pressure <= min_pre + 0.60f) type = degree::low_medium;
-	else if (pressure >= min_pre + 0.60f && pressure <= min_pre + 0.90f) type = degree::low_light;
-	else if (pressure >= min_pre + 0.90f && pressure <= min_pre + 1.10f) type = degree::comfort;
-	else if (pressure >= min_pre + 1.10f && pressure <= min_pre + 1.40f) type = degree::high_low;
-	else if (pressure >= min_pre + 1.40f && pressure <= min_pre + 1.70) type = degree::high_medium;
-	else if (pressure >= min_pre + 1.70f) type = degree::high_high;
+	if (p >= min_pre && p <= min_pre + 0.30f) type = degree::low_high;
+	else if (p >= min_pre + 0.30f && p <= min_pre + 0.60f) type = degree::low_medium;
+	else if (p >= min_pre + 0.60f && p <= min_pre + 0.90f) type = degree::low_light;
+	else if (p >= min_pre + 0.90f && p <= min_pre + 1.10f) type = degree::comfort;
+	else if (p >= min_pre + 1.10f && p <= min_pre + 1.40f) type = degree::high_low;
+	else if (p >= min_pre + 1.40f && p <= min_pre + 1.70) type = degree::high_medium;
+	else if (p >= min_pre + 1.70f) type = degree::high_high;
 	int choice = (int)type;
 	if (choice == 0) glColor3ub(128, 138, 135);
 	else if (choice == 1) glColor3ub(192, 192, 192);

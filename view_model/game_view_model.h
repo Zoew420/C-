@@ -25,6 +25,7 @@ namespace Simflow {
 		}
 
 		void trigger_pressure_ready() {
+			gvp.clear();
 			auto p = model->query_pressure();
 			for (int i = 0; i < model->height; i++) {
 				vector<float> row;
@@ -45,13 +46,12 @@ namespace Simflow {
 
     public:
 
-        GameViewModel(GameModel* model) : model(model) {
-		};
+        GameViewModel(GameModel* model) : model(model) {}
 
         // 数据准备完毕的事件源（ViewModel通知View数据准备完毕，可以绘制）
         EventSource<const vector<ParticleInfo>&> event_data_ready;
 
-		EventSource<const vector<vector<float>>&> event_pressure_ready;
+		EventSource<const vector<vector<float>>> event_pressure_ready;
 
 		EventSource<const vector<ParticleInfo>&> event_heat_ready;
 
@@ -61,6 +61,8 @@ namespace Simflow {
             [this]() {
             this->model->update();
             this->trigger_data_ready();
+			this->trigger_heat_ready();
+			this->trigger_pressure_ready();
         }));
 
         // 绘制新粒子事件处理程序（View通知ViewModel绘制新粒子）

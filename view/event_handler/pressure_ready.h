@@ -6,11 +6,11 @@
 namespace Simflow {
 	class GameView;
 
-	class PressureReadyEventHandler : public EventHandler<const vector<vector<float>>&>
+	class PressureReadyEventHandler : public EventHandler<const vector<vector<float>>>
 	{
 		GameView* view;
 	public:
 		PressureReadyEventHandler(GameView* v) : view(v) {}
-		void handle(const vector<vector<float>>& pressure);
+		void handle(const vector<vector<float>> pressure);
 	};
 }
