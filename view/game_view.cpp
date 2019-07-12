@@ -101,10 +101,17 @@ void Simflow::GameWindow::OnCreate()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		int display_w, display_h;
+		glfwMakeContextCurrent(window);
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+
 		ImGuiIO& io = ImGui::GetIO();
+		//ImGui::ShowDemoWindow();
 
 		if (show_menu) {
-			ImGui::SetNextWindowPos(ImVec2(0, 5), ImGuiCond_Appearing);
+			ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Appearing);
 			ImGui::Begin("Brush Function Choose:", &show_menu, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			if (ImGui::BeginMenuBar())
 			{
@@ -212,12 +219,9 @@ void Simflow::GameWindow::OnCreate()
 			}
 			ImGui::End();
 		}
-
-		int display_w, display_h;
-		glfwMakeContextCurrent(window);
-		glfwGetFramebufferSize(window, &display_w, &display_h);
-		glClear(GL_COLOR_BUFFER_BIT);
+		
 		event_update.trigger();
+		
 		MouseClickEvent();
 		//»æÖÆ
 		ImGui::Render();
@@ -228,21 +232,19 @@ void Simflow::GameWindow::OnCreate()
 
 void Simflow::GameWindow::MouseClickEvent()
 {
-	if (mode_draw == true || mode_heat == true || mode_pressure == true) {
-		ImGuiIO& io = ImGui::GetIO();
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-		if (io.MouseDownDuration[0] >= 0.0f) {
-			GLfloat x, y;
-			x = io.MousePos.x;
-			y = io.MousePos.y;
-			if (y >= 50 && y <= 600) {
-				vec2 p;
-				p.x = x; p.y = y;
-				if (draw == true)  UpdataParticles(p);
-				else UpdataParticlesHeat(p);
-			}
+	ImGuiIO& io = ImGui::GetIO();
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+	if (io.MouseDownDuration[0] >= 0.0f) {
+		GLfloat x, y;
+		x = io.MousePos.x;
+		y = io.MousePos.y;
+		if (y >= 50 && y <= 600) {
+			vec2 p;
+			p.x = x; p.y = y;
+			if (draw == true)  UpdataParticles(p);
+			else UpdataParticlesHeat(p);
 		}
 	}
 }
@@ -261,74 +263,111 @@ Simflow::GameView::GameView()
 	mode_draw = true;
 	mode_heat = false;
 	mode_pressure = false;
-	on_data_ready = make_shared<DataReadyEventHandler>(this);
-	on_heat_ready = make_shared<HeatReadyEventHandler>(this);
-	on_pressure_ready = make_shared<PressureReadyEventHandler>(this);
+	on_frame_ready = make_shared<FrameReadyEventHandler>(this);
+	
+	////to do: remove
+	//on_data_ready = make_shared<DataReadyEventHandler>(this);
+	//on_heat_ready = make_shared<HeatReadyEventHandler>(this);
+	//on_pressure_ready = make_shared<PressureReadyEventHandler>(this);
 }
 
-void Simflow::GameView::Handler_Data(const std::vector<ParticleInfo>& particles)
+void Simflow::GameView::Handler(FrameData data)
 {
-	if (mode_draw == true || mode_heat == true || mode_pressure == true) {
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-		for (int i = 0; i < particles.size(); i++)
-		{
-			float x = particles[i].position.x;
-			float y = particles[i].position.y;
-			x -= 400; y = 300 - y;
-            DrawParticle(x, y, particles[i].type);
-		}
-	}
-	else
+	if (mode_pressure)
 	{
-		return;
-	}
-}
-
-void Simflow::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
-{
-	if (mode_heat == true) {
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-		for (int i = 0; i < heat.size(); i++)
-		{
-			float x = heat[i].position.x;
-			float y = heat[i].position.y;
-			x -= 400; y = 300 - y;
-			float temperature = heat[i].temperature;
-			DrawHeat(x, y, temperature);
-		}
-	}
-	else
-	{
-		return;
-	}
-}
-
-void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressure)
-{
-	if (mode_pressure == true)
-	{
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
-		int m = pressure[0].size();
-		int n = pressure.size();
+		ImGui::SetNextWindowPos(ImVec2(520, 250), ImGuiCond_Appearing);
+		ImGui::Begin("Pressure Graph", &mode_pressure, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("try");
+		int m = data.pressure.width();
+		int n = data.pressure.height();
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n; j++) {
-				float p = pressure[j][i];
-                int x = i , y = 300 - j;
+				float p = data.pressure[i][j];
+				int x = i, y = 300 - j;
 				DrawPressure(x, y, p);
 			}
 		}
+		ImGui::End();
 	}
-	else
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+	for (int i = 0; i < data.particles.size(); i++)
 	{
-		return;
+		float x = data.particles[i].position.x;
+		float y = data.particles[i].position.y;
+		x -= 400; y = 300 - y;
+		float temperature = data.particles[i].temperature;
+		if(mode_heat) DrawHeat(x, y, temperature);
+		else DrawParticle(x, y, data.particles[i].type);
 	}
+	
+		
 }
+
+//void Simflow::GameView::Handler_Data(const std::vector<ParticleInfo>& particles)
+//{
+//	if (mode_draw == true || mode_heat == true || mode_pressure == true) {
+//		glLoadIdentity();
+//		glMatrixMode(GL_MODELVIEW);
+//		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+//		for (int i = 0; i < particles.size(); i++)
+//		{
+//			float x = particles[i].position.x;
+//			float y = particles[i].position.y;
+//			x -= 400; y = 300 - y;
+//            DrawParticle(x, y, particles[i].type);
+//		}
+//	}
+//	else
+//	{
+//		return;
+//	}
+//}
+//
+//void Simflow::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
+//{
+//	if (mode_heat == true) {
+//		glLoadIdentity();
+//		glMatrixMode(GL_MODELVIEW);
+//		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+//		for (int i = 0; i < heat.size(); i++)
+//		{
+//			float x = heat[i].position.x;
+//			float y = heat[i].position.y;
+//			x -= 400; y = 300 - y;
+//			float temperature = heat[i].temperature;
+//			DrawHeat(x, y, temperature);
+//		}
+//	}
+//	else
+//	{
+//		return;
+//	}
+//}
+//
+//void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressure)
+//{
+//	if (mode_pressure == true)
+//	{
+//		glLoadIdentity();
+//		glMatrixMode(GL_MODELVIEW);
+//		glOrtho(-800 / 2, 800 / 2, -600 / 2, 600 / 2, -1000, 1000);
+//		int m = pressure[0].size();
+//		int n = pressure.size();
+//		for (int i = 0; i < m; i++) {
+//			for (int j = 0; j < n; j++) {
+//				float p = pressure[j][i];
+//                int x = i , y = 300 - j;
+//				DrawPressure(x, y, p);
+//			}
+//		}
+//	}
+//	else
+//	{
+//		return;
+//	}
+//}
 
 void Simflow::GameView::UpdataParticles(const glm::vec2 & point)
 {

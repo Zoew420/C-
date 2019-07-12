@@ -69,7 +69,7 @@ namespace Simflow {
 
         // 触发该事件
         void trigger(Args... args) {
-            cout << _handlers.size() << endl;
+            //cout << _handlers.size() << endl;
             for (auto& h : _handlers) {
                 h->handle(args...);
             }

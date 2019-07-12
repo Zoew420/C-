@@ -2,14 +2,16 @@
 #define _CRT_SECURE_NO_WARNINGS 
 #include "../common/event.h"
 #include "../common/particle.h"
+#include "../common/parameter.h"
 #include "imgui/imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "imgui/glew/GL/glew.h"
 #include "imgui/glfw/include/GLFW/glfw3.h"
-#include "event_handler/data_ready.h"
-#include "event_handler/heat_ready.h"
-#include "event_handler/pressure_ready.h"
+#include "event_handler/frame_ready.h"
+//#include "event_handler/data_ready.h"
+//#include "event_handler/heat_ready.h"
+//#include "event_handler/pressure_ready.h"
 #include "draw_particle.h"
 #include <iostream>
 #include <vector>
@@ -39,32 +41,43 @@ namespace Simflow {
         // 更新事件源（View通知ViewModel进行逻辑更新）
         EventSource<> event_update;
 
-        // 绘制新粒子事件源（View通知ViewModel绘制新粒子）
-        EventSource<ParticleBrush> event_new_particles;
+		// TODO: 新的事件源，包含一帧内的所有数据
+		EventSource<FrameData> event_frame_ready;
 
-        // 改变温度事件源
-        EventSource<HeatBrush> event_change_heat;
+		// 绘制新粒子事件源（View通知ViewModel绘制新粒子）
+		EventSource<ParticleBrush> event_new_particles;
 
-        // 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
-        shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
-		
-		//温度数据准备完毕的处理函数
-		shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_heat_ready;
-		
-		//压强数据准备完毕的处理函数
-		shared_ptr<EventHandler<const vector<vector<float>>&>> on_pressure_ready;
+		// 改变温度事件源
+		EventSource<HeatBrush> event_change_heat;
+
+		//TODO: add
+		shared_ptr<EventHandler<FrameData>> on_frame_ready;
 		
 		GameView();
 
-		void Handler_Data(const vector<ParticleInfo>& particles);
-
-		void Handler_Heat(const vector<ParticleInfo>& heat);
-
-		void Handler_Pressure(const vector<vector<float>>& pressure);
+		void Handler(FrameData data);
 
 		void UpdataParticles(const vec2& point);
 
 		void UpdataParticlesHeat(const vec2& point);
+
+		//// 数据准备完毕的处理函数（ViewModel通知View数据准备完毕，可以绘制）
+		////TODO: Remove
+		//shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_data_ready;
+
+		////温度数据准备完毕的处理函数
+		////TODO: Remove
+		//shared_ptr<EventHandler<const vector<ParticleInfo>&>> on_heat_ready;
+
+		////压强数据准备完毕的处理函数
+		////TODO: Remove
+		//shared_ptr<EventHandler<const vector<vector<float>>&>> on_pressure_ready;
+		//void Handler_Data(const vector<ParticleInfo>& particles);
+
+		//void Handler_Heat(const vector<ParticleInfo>& heat);
+
+		//void Handler_Pressure(const vector<vector<float>>& pressure);
+
     };
 
 	class GameWindow :public GameView{

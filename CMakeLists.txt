@@ -9,9 +9,10 @@ set(src
 	model/air_solver
 	view/game_view
 	view/draw_particle
-	view/event_handler/data_ready
-	view/event_handler/heat_ready
-	view/event_handler/pressure_ready
+	view/event_handler/frame_ready
+	#view/event_handler/data_ready
+	#view/event_handler/heat_ready
+	#view/event_handler/pressure_ready
 	view_model/game_view_model
 )
 
