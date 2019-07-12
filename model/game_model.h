@@ -121,7 +121,7 @@ namespace Simflow {
                 state_next.p_type[i] = state_cur.p_type[i];
                 state_next.p_pos[i] = state_cur.p_pos[i];
                 state_next.p_vel[i] = state_cur.p_vel[i];
-                state_next.p_heat[i] = state_next.p_heat[i];
+                state_next.p_heat[i] = state_cur.p_heat[i];
             }
         }
 
@@ -144,7 +144,7 @@ namespace Simflow {
         }
 
         template<typename F>
-        auto bilinear_sample_air(ivec2 pos, F& f) -> decltype(f(ivec2())) {
+        auto bilinear_sample_air(ivec2 pos, F & f) -> decltype(f(ivec2())) {
             using T = decltype(f(ivec2()));
             pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
             ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
@@ -177,7 +177,8 @@ namespace Simflow {
         }
 
 
-        float average_heat(ivec2 ipos_near) {
+        float average_heat(ivec2 ipos_near, float& weight) {
+            weight = 0;
             if (in_bound(ipos_near)) {//是否在画布里
                 int im1 = idx(ipos_near);//得到它在画布上的index
                 PixelParticleList& list = state_cur.map_index[im1];//找到该像素点的所有粒子编号
@@ -185,6 +186,7 @@ namespace Simflow {
                     float avg = 0.0f;
                     for (int i = list.from; i <= list.to; i++) {
                         avg += state_cur.p_heat[i];
+                        weight += 1;
                     }
                     avg /= (list.to - list.from);
                     return avg;
@@ -211,12 +213,19 @@ namespace Simflow {
                 ivec2 ipos2 = ivec2(ipos.x, ipos.y + 1);
                 ivec2 ipos3 = ivec2(ipos.x - 1, ipos.y);
                 ivec2 ipos4 = ivec2(ipos.x + 1, ipos.y);
-                float t1 = average_heat(ipos1);
-                float t2 = average_heat(ipos2);
-                float t3 = average_heat(ipos3);
-                float t4 = average_heat(ipos4);
-                float delt_t = t1 + t2 + t3 + t4 - 4 * state_cur.p_heat[ip];
-                state_cur.p_heat[ip] = K_DT * particle_diff(state_cur.p_type[ip]) * delt_t + state_cur.p_heat[ip];
+                float w[4], t[4];
+                t[0] = average_heat(ipos1, w[0]);
+                t[1] = average_heat(ipos2, w[1]);
+                t[2] = average_heat(ipos3, w[2]);
+                t[3] = average_heat(ipos4, w[3]);
+                float w_sum = 0;
+                float wt_sum = 0;
+                for (int i = 0; i < 4; i++) {
+                    w_sum += w[i];
+                    wt_sum += w[i] * t[i];
+                }
+                float delt_t = wt_sum / (w_sum + 1E-6) - state_cur.p_heat[ip];
+                state_next.p_heat[ip] = K_DT * particle_diff(state_cur.p_type[ip]) * delt_t + state_cur.p_heat[ip];
             }
         }
 
