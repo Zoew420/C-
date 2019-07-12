@@ -266,7 +266,7 @@ Simflow::GameView::GameView()
 	on_pressure_ready = make_shared<PressureReadyEventHandler>(this);
 }
 
-void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
+void Simflow::GameView::Handler_Data(const std::vector<ParticleInfo>& particles)
 {
 	if (mode_draw == true) {
 		glLoadIdentity();
@@ -278,18 +278,7 @@ void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
 			float x = particles[i].position.x;
 			float y = particles[i].position.y;
 			x -= 400; y = 300 - y;
-			if (particles[i].type == ParticleType::Iron)
-			{
-				DrawPaticle(x, y, 1.0f, int(ParticleType::Iron));
-			}
-			else if (particles[i].type == ParticleType::Sand)
-			{
-				DrawPaticle(x, y, 1.0f, int(ParticleType::Sand));
-			}
-			else if (particles[i].type == ParticleType::Water)
-			{
-				DrawPaticle(x, y, 1.0f, int(ParticleType::Water));
-			}
+            DrawParticle(x, y, particles[i].type);
 		}
 	}
 	else
@@ -298,7 +287,7 @@ void Simflow::GameView::Handler(const std::vector<ParticleInfo>& particles)
 	}
 }
 
-void T::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
+void Simflow::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
 {
 	if (mode_heat == true) {
 		glLoadIdentity();
@@ -319,7 +308,7 @@ void T::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
 	}
 }
 
-void T::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressure)
+void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>>& pressure)
 {
 	if (mode_pressure == true)
 	{

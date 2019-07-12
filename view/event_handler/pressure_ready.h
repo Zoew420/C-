@@ -3,7 +3,7 @@
 #include "../../common/particle.h"
 #include <vector>
 
-namespace T {
+namespace Simflow {
 	class GameView;
 
 	class PressureReadyEventHandler : public EventHandler<const vector<vector<float>>&>

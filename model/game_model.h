@@ -137,7 +137,7 @@ namespace Simflow {
             pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
             ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
             vec2 fr = glm::fract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
-            vec2 lp_p[4] = {
+            vec2 p[4] = {
                 safe_sample_air(base),
                 safe_sample_air(base + ivec2(1,0)),
                 safe_sample_air(base + ivec2(0,1)),
@@ -151,7 +151,7 @@ namespace Simflow {
             };
             vec2 sum = vec2();
             for (int i = 0; i < 4; i++) {
-                sum += lp_p[i] * w[i];
+                sum += p[i] * w[i];
             }
             return sum;
         }
@@ -230,11 +230,11 @@ namespace Simflow {
 
             vec2 v_p = state_cur.p_vel[ip]; // particle velocity
             vec2 v_rel = v_p - v_air; // relative velocity
-            float lp_p = airflow_solver.lp_p[im_air]; // air pressure
-            lp_p = glm::max(0.f, 1 + lp_p / 5);
+            float p = airflow_solver.p[im_air]; // air pressure
+            p = glm::max(0.f, 1 + p / 5);
             float mass = particle_mass(cur_type);
 
-            vec2 f_resis = -K_AIR_RESISTANCE * lp_p * v_rel * length(v_rel);
+            vec2 f_resis = -K_AIR_RESISTANCE * p * v_rel * length(v_rel);
             float limit = length(f_resis / mass * K_DT) / length(v_rel);
             if (limit > 1) f_resis /= limit; // IMPORTANT: prevent numerical explosion
 
@@ -249,10 +249,10 @@ namespace Simflow {
             vector<vec2> p_im_pos;
             vector<vec2> p_im_vel;
             vector<int> p_idx_mapping;
-            vector<float> lp_rho, lp_p;
+            vector<float> lp_rho, p;
             void reset_lp(int n_liquid) {
                 lp_rho.resize(n_liquid);
-                lp_p.resize(n_liquid);
+                p.resize(n_liquid);
             }
             void reset_p(int n_all) {
                 p_idx_mapping.resize(n_all);
@@ -373,7 +373,7 @@ namespace Simflow {
                         {
                             int t_il = liquid_buf.p_idx_mapping[t_ip];
                             // compute pressure force contribution
-                            f_press += -normalize(pos_diff) * t_mass * liquid_buf.lp_p[t_il] / liquid_buf.lp_rho[t_il] * SPIKY_GRAD * pow(H - r, 2.f);
+                            f_press += -normalize(pos_diff) * t_mass * liquid_buf.p[t_il] / liquid_buf.lp_rho[t_il] * SPIKY_GRAD * pow(H - r, 2.f);
                             // compute viscosity force contribution
                             f_visc += VISC * t_mass * vel_diff / (liquid_buf.lp_rho[t_il]) * VISC_LAP * (H - r);
                             //vec2 f = f_press + f_visc;

@@ -22,7 +22,7 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec2 unpackUnorm2x16(uint lp_p)
+	GLM_FUNC_QUALIFIER vec2 unpackUnorm2x16(uint p)
 	{
 		union
 		{
@@ -30,7 +30,7 @@ namespace glm
 			unsigned short out[2];
 		} u;
 
-		u.in = lp_p;
+		u.in = p;
 
 		return vec2(u.out[0], u.out[1]) * 1.5259021896696421759365224689097e-5f;
 	}
@@ -51,7 +51,7 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec2 unpackSnorm2x16(uint lp_p)
+	GLM_FUNC_QUALIFIER vec2 unpackSnorm2x16(uint p)
 	{
 		union
 		{
@@ -59,7 +59,7 @@ namespace glm
 			signed short out[2];
 		} u;
 
-		u.in = lp_p;
+		u.in = p;
 
 		return clamp(vec2(u.out[0], u.out[1]) * 3.0518509475997192297128208258309e-5f, -1.0f, 1.0f);
 	}
@@ -82,7 +82,7 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER vec4 unpackUnorm4x8(uint lp_p)
+	GLM_FUNC_QUALIFIER vec4 unpackUnorm4x8(uint p)
 	{
 		union
 		{
@@ -90,7 +90,7 @@ namespace glm
 			unsigned char out[4];
 		} u;
 
-		u.in = lp_p;
+		u.in = p;
 
 		return vec4(u.out[0], u.out[1], u.out[2], u.out[3]) * 0.0039215686274509803921568627451f;
 	}
@@ -113,7 +113,7 @@ namespace glm
 		return u.out;
 	}
 
-	GLM_FUNC_QUALIFIER glm::vec4 unpackSnorm4x8(uint lp_p)
+	GLM_FUNC_QUALIFIER glm::vec4 unpackSnorm4x8(uint p)
 	{
 		union
 		{
@@ -121,7 +121,7 @@ namespace glm
 			signed char out[4];
 		} u;
 
-		u.in = lp_p;
+		u.in = p;
 
 		return clamp(vec4(u.out[0], u.out[1], u.out[2], u.out[3]) * 0.0078740157480315f, -1.0f, 1.0f);
 	}
