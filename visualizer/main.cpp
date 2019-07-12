@@ -8,7 +8,7 @@ int map[msize][msize];
 int main() {
 
     my3d::present::initialize(GetConsoleWindow(), 200, 200, 2);
-    GameModel gm(msize, msize);
+    GameModel<msize, msize> gm;
 
     for (int i = 10; i <= 90; i += 2) {
         gm.set_new_particles(ParticleBrush(vec2(40, i), 3, ParticleType::Iron));

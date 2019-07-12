@@ -6,7 +6,7 @@ using namespace Simflow;
 const int msize = 512;
 int main() {
 	GameWindow win;
-    GameModel gm(msize, msize);
+    GameModel<msize, msize> gm;
     GameViewModel gvm(&gm);
 
     win.event_update += gvm.on_update;

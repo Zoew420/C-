@@ -2,14 +2,15 @@
 #include "../common/event.h"
 #include "../common/particle.h"
 #include "../common/parameter.h"
+#include "../common/timer.h"
 #include "../model/game_model.h"
 
 namespace Simflow {
     using namespace std;
 
-
+    template<int width, int height>
     class GameViewModel {
-        GameModel* model;
+        GameModel<width, height>* model;
 
         vector<ParticleInfo> data_buffer;
 
@@ -33,9 +34,9 @@ namespace Simflow {
         void trigger_pressure_ready() {
             gvp.clear();
             auto& p = model->query_pressure();
-            for (int i = 0; i < model->height; i++) {
+            for (int i = 0; i < height; i++) {
                 vector<float> row;
-                for (int j = 0; j < model->width; j++)row.push_back(p[i][j]);
+                for (int j = 0; j < width; j++) row.push_back(p[i][j]);
                 gvp.push_back(row);
             }
             event_pressure_ready.trigger(gvp);
@@ -65,7 +66,7 @@ namespace Simflow {
 
     public:
 
-        GameViewModel(GameModel * model) : model(model) {}
+        GameViewModel(GameModel<width, height> * model) : model(model) {}
 
         // TODO: 新的事件源，包含一帧内的所有数据
         EventSource<FrameData> event_frame_ready;
@@ -86,10 +87,14 @@ namespace Simflow {
             [this]() {
             this->model->update();
             // TODO: 移除老的事件触发
+            Timer t;
+
             this->trigger_data_ready();
             this->trigger_heat_ready();
             this->trigger_pressure_ready();
-            this->trigger_frame_ready();
+            // this->trigger_frame_ready();
+
+            cout << "trigger time: " << t.ms() << endl;
         }));
 
         // 绘制新粒子事件处理程序（View通知ViewModel绘制新粒子）

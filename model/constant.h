@@ -3,11 +3,11 @@
 
 namespace Simflow {
     using namespace glm;
-    const float K_GRAVITY = 10.0;
-    const float K_DT = 0.1f;
+    constexpr float K_GRAVITY = 10.0;
+    constexpr float K_DT = 0.1f;
 
-    const float K_AIR_RESISTANCE = 0.2;
-    const int K_AIRFLOW_DOWNSAMPLE = 4;
+    constexpr float K_AIR_RESISTANCE = 0.2;
+    constexpr int K_AIRFLOW_DOWNSAMPLE = 4;
 
     const int K_LIQUID_GRID_DOWNSAMPLE = 8;
     const int K_LIQUID_ITERATIONS = 5;

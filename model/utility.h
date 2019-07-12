@@ -15,4 +15,15 @@ namespace Simflow {
 
     inline ivec2 f2i(vec2 v) { return v + vec2(0.5); };
     inline int f2i(float v) { return v + 0.5; }
+
+    inline float fract(float v) {
+        return float(int(v)) - v;
+    }
+
+    template<typename T>
+    inline T clamp(T v, T min, T max) {
+        v = v < min ? min : v;
+        v = v > max ? max : v;
+        return v;
+    }
 }

@@ -2,6 +2,7 @@
 #include "../common/particle.h"
 #include "../common/event.h"
 #include "../common/array2d.h"
+#include "../common/timer.h"
 #include "air_solver.h"
 #include "constant.h"
 #include <algorithm>
@@ -14,6 +15,7 @@ namespace Simflow {
     using namespace std;
 
     // 示意代码
+    template<int width, int height>
     class GameModel {
     public:
         int frame_counter = 0;
@@ -83,19 +85,9 @@ namespace Simflow {
             }
         } state_next;
 
-
-        int width, height;
-        Array2D<float> pressure;
-        /*float ** heat;*/
-
-        const Array2D<float>& query_pressure() {
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width; i++) {
-                    pressure[j][i] = bilinear_sample_air_p(ivec2(i, j));
-                }
-            }
-            return pressure;
-        }
+        //int width, height;
+        //int width_air, height_air;
+        //int width_liquid, height_liquid;
 
 
         bool in_bound(int c, int r) { return r >= 0 && r < height && c >= 0 && c < width; }
@@ -351,7 +343,6 @@ namespace Simflow {
                             // 防止normalize零向量
                             // 此处随机给一个方向
                             pos_diff = vec2(random(-1, 1), random(-1, 1));
-                            cout << "too close!" << endl;
                         }
                         if (r < K_LIQUID_RADIUS)
                         {
@@ -385,11 +376,17 @@ namespace Simflow {
 
 #pragma region 气流
 
+        //int myclamp(int v, int min, int max) {
+        //    v = v < min ? min : v;
+        //    v = v > max ? max : v;
+        //    return v;
+        //}
+
         int safe_air_idx(ivec2 p_air) {
-            if (p_air.x < 0) p_air.x = 0;
-            if (p_air.x >= width / K_AIRFLOW_DOWNSAMPLE) p_air.x = width / K_AIRFLOW_DOWNSAMPLE - 1;
-            if (p_air.y < 0) p_air.y = 0;
-            if (p_air.y >= height / K_AIRFLOW_DOWNSAMPLE) p_air.y = height / K_AIRFLOW_DOWNSAMPLE - 1;
+            int wlim = width / K_AIRFLOW_DOWNSAMPLE - 1;
+            int hlim = height / K_AIRFLOW_DOWNSAMPLE - 1;
+            p_air.x = clamp(p_air.x, 0, wlim);
+            p_air.y = clamp(p_air.y, 0, hlim);
             return p_air.y * (width / K_AIRFLOW_DOWNSAMPLE) + p_air.x;
         }
 
@@ -404,7 +401,7 @@ namespace Simflow {
         }
 
         vec2 myfract(vec2 v) {
-            return vec2(ivec2(v)) - v;
+            return vec2(float(int(v.x)) - v.x, float(int(v.y)) - v.y);
         }
 
         template<typename F>
@@ -433,6 +430,10 @@ namespace Simflow {
         }
 
         vec2 bilinear_sample_air_v(ivec2 pos) {
+            //vec2 v = bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
+            //v += bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
+            //v += bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
+
             return bilinear_sample_air(pos, [this](ivec2 pos) { return safe_sample_air_v(pos); });
         }
 
@@ -684,19 +685,21 @@ namespace Simflow {
 
 #pragma endregion
 
+        Array2D<float> pressure;
+
     public:
-        GameModel(int w, int h) : width(w), height(h), state_cur(w * h), state_next(), pressure(h, w) {
-            assert(w % K_AIRFLOW_DOWNSAMPLE == 0);
-            assert(h % K_AIRFLOW_DOWNSAMPLE == 0);
-            assert(w % K_LIQUID_GRID_DOWNSAMPLE == 0);
-            assert(h % K_LIQUID_GRID_DOWNSAMPLE == 0);
+        GameModel() : state_cur(width * height), state_next(), pressure(height, width) { //width(w), height(h), 
+            assert(width % K_AIRFLOW_DOWNSAMPLE == 0);
+            assert(height % K_AIRFLOW_DOWNSAMPLE == 0);
+            assert(width % K_LIQUID_GRID_DOWNSAMPLE == 0);
+            assert(height % K_LIQUID_GRID_DOWNSAMPLE == 0);
 
             //pressure = new float* [height];
             ///*heat = new float* [height];*/
             //for (int i = 0; i < height; i++)pressure[i] = new float[width]();
             /*	for (int i = 0; i < height; i++)heat[i] = new float [width]();*/
 
-            airflow_solver.init(h / K_AIRFLOW_DOWNSAMPLE, w / K_AIRFLOW_DOWNSAMPLE, K_DT);
+            airflow_solver.init(height / K_AIRFLOW_DOWNSAMPLE, width / K_AIRFLOW_DOWNSAMPLE, K_DT);
             airflow_solver.reset();
         };
 
@@ -704,37 +707,24 @@ namespace Simflow {
         void update() {
             frame_counter++;
 
+            Timer t;
+
             if (frame_counter == 161) {
                 int debug = 1;
             }
             prepare();
 
 
-            {
-                auto begin = std::chrono::high_resolution_clock::now();
-                compute_heat();
-                auto end = std::chrono::high_resolution_clock::now();
-                std::cout << "heat: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
-            }
-
-            {
-                auto begin = std::chrono::high_resolution_clock::now();
-                compute_vel();
-                auto end = std::chrono::high_resolution_clock::now();
-                std::cout << "vel: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
-            }
-
-            {
-                auto begin = std::chrono::high_resolution_clock::now();
-                compute_air_flow();
-                auto end = std::chrono::high_resolution_clock::now();
-                std::cout << "air: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
-            }
+            compute_heat();
+            compute_vel();
+            compute_air_flow();
 
             compute_position();
             handle_change_heat();
             handle_new_particles();
             complete();
+
+            cout << "frametime: " << t.ms() << endl;
         }
 
         void set_new_particles(ParticleBrush brush) {
@@ -755,5 +745,17 @@ namespace Simflow {
         QueryParticleResult query_particles() {
             return QueryParticleResult{ state_cur.p_type, state_cur.p_pos, state_cur.p_heat };
         }
+
+        const Array2D<float>& query_pressure() {
+            //Timer t;
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
+                    pressure[j][i] = bilinear_sample_air_p(ivec2(i, j));
+                }
+            }
+            //cout << t.ms() << endl;
+            return pressure;
+        }
+
     };
 }
