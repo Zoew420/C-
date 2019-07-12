@@ -89,10 +89,10 @@ namespace Simflow {
             // TODO: 移除老的事件触发
             Timer t;
 
-            this->trigger_data_ready();
-            this->trigger_heat_ready();
-            this->trigger_pressure_ready();
-            // this->trigger_frame_ready();
+            //this->trigger_data_ready();
+            //this->trigger_heat_ready();
+            //this->trigger_pressure_ready();
+            this->trigger_frame_ready();
 
             cout << "trigger time: " << t.ms() << endl;
         }));

@@ -17,7 +17,11 @@ namespace Simflow {
     inline int f2i(float v) { return v + 0.5; }
 
     inline float fract(float v) {
-        return float(int(v)) - v;
+        return v - float(int(v));
+    }
+
+    inline vec2 fract(vec2 v) {
+        return vec2(fract(v.x), fract(v.y));
     }
 
     template<typename T>

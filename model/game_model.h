@@ -400,16 +400,13 @@ namespace Simflow {
             return airflow_solver.p[im_air];
         }
 
-        vec2 myfract(vec2 v) {
-            return vec2(float(int(v.x)) - v.x, float(int(v.y)) - v.y);
-        }
 
         template<typename F>
         auto bilinear_sample_air(ivec2 pos, F & f) -> decltype(f(ivec2())) {
             using T = decltype(f(ivec2()));
             pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
             ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
-            vec2 fr = myfract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
+            vec2 fr = fract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
             T p[4] = {
                 f(base),
                 f(base + ivec2(1,0)),
