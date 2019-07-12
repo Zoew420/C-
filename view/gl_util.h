@@ -9,6 +9,7 @@ namespace Simflow {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glOrtho(0, w, h, 0, -1000, 1000);
+        glViewport(0, 0, w, h);
     }
 
     inline void create_framebuffer(GLuint* framebuffer, GLuint* framebuffer_tex, int w, int h) {
