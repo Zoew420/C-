@@ -51,7 +51,7 @@ namespace Simflow {
         // 数据准备完毕的事件源（ViewModel通知View数据准备完毕，可以绘制）
         EventSource<const vector<ParticleInfo>&> event_data_ready;
 
-		EventSource<const vector<vector<float>>> event_pressure_ready;
+		EventSource<const vector<vector<float>>&> event_pressure_ready;
 
 		EventSource<const vector<ParticleInfo>&> event_heat_ready;
 

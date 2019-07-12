@@ -299,7 +299,7 @@ void Simflow::GameView::Handler_Heat(const std::vector<ParticleInfo>& heat)
 			float y = heat[i].position.y;
 			x -= 400; y = 300 - y;
 			float temperature = heat[i].temperature;
-			DrawHeat(x, y, 1.0f, temperature);
+			DrawHeat(x, y, temperature);
 		}
 	}
 	else
@@ -320,7 +320,7 @@ void Simflow::GameView::Handler_Pressure(const std::vector<std::vector<float>>& 
 		for (int i = 0; i <= m; i++) {
 			for (int j = 0; j <= n; j++) {
 				float p = pressure[i][j];
-				DrawHeat(i, j, 1.0f, p);
+				DrawHeat(i, j, p);
 			}
 		}
 	}
