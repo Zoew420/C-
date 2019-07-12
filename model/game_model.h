@@ -8,6 +8,7 @@
 #include "utility.h"
 #include <vector>
 #include <queue>
+#include <chrono>
 
 namespace Simflow {
     using namespace std;
@@ -88,8 +89,8 @@ namespace Simflow {
         /*float ** heat;*/
 
         const Array2D<float>& query_pressure() {
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
                     pressure[j][i] = bilinear_sample_air_p(ivec2(i, j));
                 }
             }
@@ -265,8 +266,8 @@ namespace Simflow {
 
         template<typename F>
         void iterate_neighbor_particles(ivec2 pos, int r_neibor, F & f) {
-            for (int dx = r_neibor; dx >= -r_neibor; dx--) {
-                for (int dy = -r_neibor; dy <= r_neibor; dy++) {
+            for (int dy = -r_neibor; dy <= r_neibor; dy++) {
+                for (int dx = r_neibor; dx >= -r_neibor; dx--) {
                     ivec2 n_pos = pos + ivec2(dx, dy);
                     if (!in_bound(n_pos)) continue;
                     if (dx * dx + dy * dy > r_neibor * r_neibor) continue;
@@ -286,8 +287,8 @@ namespace Simflow {
             ivec2 bto = (pos + ivec2(r_neighbor)) / K_LIQUID_GRID_DOWNSAMPLE;
             bfrom = max(ivec2(0, 0), bfrom);
             bto = min(ivec2(width, height) / K_LIQUID_GRID_DOWNSAMPLE - 1, bto);
-            for (int bx = bfrom.x; bx <= bto.x; bx++) {
-                for (int by = bfrom.y; by <= bto.y; by++) {
+            for (int by = bfrom.y; by <= bto.y; by++) {
+                for (int bx = bfrom.x; bx <= bto.x; bx++) {
                     int b_pos = by * (width / K_LIQUID_GRID_DOWNSAMPLE) + bx;
                     for (int ip_liquid : state_cur.map_block_liquid[b_pos].idx_lp) {
                         f(ip_liquid);
@@ -402,12 +403,16 @@ namespace Simflow {
             return airflow_solver.p[im_air];
         }
 
+        vec2 myfract(vec2 v) {
+            return vec2(ivec2(v)) - v;
+        }
+
         template<typename F>
         auto bilinear_sample_air(ivec2 pos, F & f) -> decltype(f(ivec2())) {
             using T = decltype(f(ivec2()));
             pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
             ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
-            vec2 fr = glm::fract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
+            vec2 fr = myfract(vec2(pos) / float(K_AIRFLOW_DOWNSAMPLE));
             T p[4] = {
                 f(base),
                 f(base + ivec2(1,0)),
@@ -556,11 +561,11 @@ namespace Simflow {
                     v1y0 = state_next.p_vel[ip].y;
                     v2y0 = state_next.p_vel[c_res.target_index].y;
 
-                    v1x1 = 1.0 * (m1 * v1x0 + m2 * v2x0 + K_COLLISION_RESTITUTION * m2 * (v2x0 - v1x0)) / (m1 + m2);
-                    v1y1 = 1.0 * (m1 * v1y0 + m2 * v2y0 + K_COLLISION_RESTITUTION * m2 * (v2y0 - v1y0)) / (m1 + m2);
+                    v1x1 = 1.0f * (m1 * v1x0 + m2 * v2x0 + K_COLLISION_RESTITUTION * m2 * (v2x0 - v1x0)) / (m1 + m2);
+                    v1y1 = 1.0f * (m1 * v1y0 + m2 * v2y0 + K_COLLISION_RESTITUTION * m2 * (v2y0 - v1y0)) / (m1 + m2);
 
-                    v2x1 = 1.0 * (m1 * v1x0 + m2 * v2x0 + K_COLLISION_RESTITUTION * m1 * (v1x0 - v2x0)) / (m1 + m2);
-                    v2y1 = 1.0 * (m1 * v1y0 + m2 * v2y0 + K_COLLISION_RESTITUTION * m1 * (v1y0 - v2y0)) / (m1 + m2);
+                    v2x1 = 1.0f * (m1 * v1x0 + m2 * v2x0 + K_COLLISION_RESTITUTION * m1 * (v1x0 - v2x0)) / (m1 + m2);
+                    v2y1 = 1.0f * (m1 * v1y0 + m2 * v2y0 + K_COLLISION_RESTITUTION * m1 * (v1y0 - v2y0)) / (m1 + m2);
 
                     state_next.p_vel[ip] = vec2(v1x1, v1y1);
                     state_next.p_vel[c_res.target_index] = vec2(v2x1, v2y1);
@@ -661,8 +666,8 @@ namespace Simflow {
             if (has_heat_brush) {
                 ivec2 center = f2i(cur_heat_brush.center);
                 int r_find = cur_heat_brush.radius + 1;
-                for (int x = center.x - r_find; x <= center.x + r_find; x++) {
-                    for (int y = center.y - r_find; y <= center.y + r_find; y++) {
+                for (int y = center.y - r_find; y <= center.y + r_find; y++) {
+                    for (int x = center.x - r_find; x <= center.x + r_find; x++) {
                         if (in_bound(x, y) && glm::distance(vec2(x, y), cur_heat_brush.center) <= cur_heat_brush.radius) {
                             PixelParticleList lst = state_cur.map_index[idx(ivec2(x, y))];
                             if (!lst.nil()) {
@@ -702,12 +707,31 @@ namespace Simflow {
             if (frame_counter == 161) {
                 int debug = 1;
             }
-
             prepare();
-            compute_heat();
-            compute_vel();
+
+
+            {
+                auto begin = std::chrono::high_resolution_clock::now();
+                compute_heat();
+                auto end = std::chrono::high_resolution_clock::now();
+                std::cout << "heat: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+            }
+
+            {
+                auto begin = std::chrono::high_resolution_clock::now();
+                compute_vel();
+                auto end = std::chrono::high_resolution_clock::now();
+                std::cout << "vel: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+            }
+
+            {
+                auto begin = std::chrono::high_resolution_clock::now();
+                compute_air_flow();
+                auto end = std::chrono::high_resolution_clock::now();
+                std::cout << "air: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+            }
+
             compute_position();
-            compute_air_flow();
             handle_change_heat();
             handle_new_particles();
             complete();
