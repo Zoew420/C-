@@ -16,101 +16,132 @@
 #include <memory>
 
 namespace Simflow {
-    using namespace std;
+	using namespace std;
 
-    class PressureGraphRenderer {
-        GLuint framebuffer = -1;
-        GLuint framebuffer_tex = -1;
+	class PressureGraphRenderer {
+		GLuint framebuffer = -1;
+		GLuint framebuffer_tex = -1;
 
-    public:
-        PressureGraphRenderer() {
-            create_framebuffer(&framebuffer, &framebuffer_tex, 128, 128);
-        }
+	public:
+		PressureGraphRenderer() {
+			create_framebuffer(&framebuffer, &framebuffer_tex, 128, 128);
+		}
 
-        // 返回纹理id
-        GLuint render_texture(const FrameData& data) {
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            int m = data.pressure.width();
-            int n = data.pressure.height();
-            reset_matrix(128, 128);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glBegin(GL_POINTS);
-            for (int j = 0; j < n; j += 4) {
-                for (int i = 0; i < m; i += 4) {
-                    float p = data.pressure[j][i];
-                    int x = i / 4, y = j / 4;
-                    set_color(p);
-                    glVertex2i(x, y);                }
-            }
-            glEnd();
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            return framebuffer_tex;
-        }
-    };
+		// 返回纹理id
+		GLuint render_texture(const FrameData& data) {
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			int m = data.pressure.width();
+			int n = data.pressure.height();
+			reset_matrix(128, 128);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBegin(GL_POINTS);
+			for (int j = 0; j < n; j += 4) {
+				for (int i = 0; i < m; i += 4) {
+					float p = data.pressure[j][i];
+					int x = i / 4, y = j / 4;
+					set_color_pressure(p);
+					glVertex2i(x, y);
+				}
+			}
+			glEnd();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			return framebuffer_tex;
+		}
+	};
 
+	class HeatGraphRenderer {
+		GLuint framebuffer = -1;
+		GLuint framebuffer_tex = -1;
 
-    class GameView {
-    protected:
-        /*压强图的纹理*/
-        unique_ptr<PressureGraphRenderer> pressure_graph = nullptr;
+	public:
+		HeatGraphRenderer() {
+			create_framebuffer(&framebuffer, &framebuffer_tex, 128, 128);
+		}
 
-        /*绘制沙子与绘制固体的bool值*/
-        bool draw_sand;
-        bool draw_iron;
-        bool draw_water;
+		// 返回纹理id
+		GLuint render_texture(const FrameData& data) {
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			reset_matrix(128, 128);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBegin(GL_POINTS);
+			for (int i = 0; i < data.particles.size(); i++)
+			{
+				float x = data.particles[i].position.x / 4;
+				float y = data.particles[i].position.y / 4;
+				float temperature = data.particles[i].temperature;
+				set_color_heat(temperature);
+				glVertex2i(x, y);
+			}
+			glEnd();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			return framebuffer_tex;
+		}
+	};
 
-        /*画笔大小的选择*/
-        bool brush_1pix;
-        bool brush_5pix;
-        bool brush_10pix;
+	class GameView {
+	protected:
+		/*压强图的纹理*/
+		unique_ptr<PressureGraphRenderer> pressure_graph = nullptr;
 
-        /*画笔功能的选择*/
-        bool draw;
-        bool inc_heat;
-        bool dec_heat;
+		/*温度图的纹理*/
+		unique_ptr<HeatGraphRenderer> heat_graph = nullptr;
 
-        /*窗口模式设定*/
-        bool mode_draw;
-        bool mode_heat;
-        bool mode_pressure;
+		/*绘制沙子与绘制固体的bool值*/
+		bool draw_sand;
+		bool draw_iron;
+		bool draw_water;
 
-        /*更新ParticleBrush*/
-        void UpdataParticles(const vec2& point);
+		/*画笔大小的选择*/
+		bool brush_1pix;
+		bool brush_5pix;
+		bool brush_10pix;
 
-        /*更新HeatBrush*/
-        void UpdataParticlesHeat(const vec2& point);
+		/*画笔功能的选择*/
+		bool draw;
+		bool inc_heat;
+		bool dec_heat;
 
-    public:
-        /*GLF窗口*/
-        GLFWwindow* window;
+		/*窗口模式设定*/
+		bool mode_draw;
+		bool mode_heat;
+		bool mode_pressure;
 
-        // 更新事件源（View通知ViewModel进行逻辑更新）
-        EventSource<> event_update;
+		/*更新ParticleBrush*/
+		void UpdataParticles(const vec2& point);
 
-        // 新的事件源，包含一帧内的所有数据
-        EventSource<FrameData> event_frame_ready;
+		/*更新HeatBrush*/
+		void UpdataParticlesHeat(const vec2& point);
 
-        // 绘制新粒子事件源
-        EventSource<ParticleBrush> event_new_particles;
+	public:
+		/*GLF窗口*/
+		GLFWwindow* window;
 
-        // 改变温度事件源
-        EventSource<HeatBrush> event_change_heat;
+		// 更新事件源（View通知ViewModel进行逻辑更新）
+		EventSource<> event_update;
 
-        //framedata处理事件指针
-        shared_ptr<EventHandler<FrameData>> on_frame_ready;
+		// 新的事件源，包含一帧内的所有数据
+		EventSource<FrameData> event_frame_ready;
 
-        GameView();
+		// 绘制新粒子事件源
+		EventSource<ParticleBrush> event_new_particles;
 
-        ~GameView();
+		// 改变温度事件源
+		EventSource<HeatBrush> event_change_heat;
 
-        //framedata处理事件
-        void Handler(FrameData data);
+		//framedata处理事件指针
+		shared_ptr<EventHandler<FrameData>> on_frame_ready;
 
-        //构造窗口环境
-        void OnCreate();
+		GameView();
 
-        //鼠标点击事件处理
-        void MouseClickEvent();
-    };
+		~GameView();
+
+		//framedata处理事件
+		void Handler(FrameData data);
+
+		//构造窗口环境
+		void OnCreate();
+
+		//鼠标点击事件处理
+		void MouseClickEvent();
+	};
 }
-
