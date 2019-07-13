@@ -10,6 +10,7 @@
 #include <vector>
 #include <queue>
 #include <chrono>
+#include "../common/parallel.h"
 
 namespace Simflow {
     using namespace std;
@@ -683,7 +684,7 @@ namespace Simflow {
 #pragma endregion
 
         Array2D<float> pressure;
-
+		Parallel parallel_line;
     public:
         GameModel() : state_cur(width * height), state_next(), pressure(height, width) { //width(w), height(h), 
             assert(width % K_AIRFLOW_DOWNSAMPLE == 0);
@@ -711,9 +712,14 @@ namespace Simflow {
             }
             prepare();
 
-
-            compute_heat();
-            compute_vel();
+			parallel_line.invoke({
+				function([this]() { compute_heat(); }),
+				function([this]() { compute_vel(); })
+				//function([this]() { compute_air_flow(); })
+				}
+			);
+            //compute_heat();
+            //compute_vel();
             compute_air_flow();
 
             compute_position();
