@@ -19,7 +19,7 @@ namespace Simflow {
 
         int width() const { return _width; }
         int height() const { return _height; }
-        bool in_bound(int row, int col) const { return row >= 0 && row < width && col >= 0 && col < height; }
+        bool in_bound(int row, int col) const { return row >= 0 && row < _height && col >= 0 && col < _width; }
         const T& item(int row, int col) const { return _data[row * _width + col]; }
         T& item(int row, int col) { return _data[row * _width + col]; }
         const T* operator[](int row) const { return &item(row, 0); }
