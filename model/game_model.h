@@ -242,17 +242,19 @@ namespace Simflow {
 
         struct LiquidBuffer {
             vector<vec2> p_im_pos;
+            vector<vec2> p_im_pos0;
             vector<vec2> p_im_vel;
-            vector<int> p_idx_mapping;
-            vector<float> lp_rho, p;
-            void reset_lp(int n_liquid) {
-                lp_rho.resize(n_liquid);
-                p.resize(n_liquid);
-            }
+            vector<vec2> p_im_vel0;
+
             void reset_p(int n_all) {
-                p_idx_mapping.resize(n_all);
                 p_im_pos.resize(n_all);
+                p_im_pos0.resize(n_all);
                 p_im_vel.resize(n_all);
+                p_im_vel0.resize(n_all);
+            }
+            void swap() {
+                std::swap(p_im_pos, p_im_pos0);
+                std::swap(p_im_vel, p_im_vel0);
             }
         } liquid_buf;
 
@@ -289,56 +291,45 @@ namespace Simflow {
             }
         }
 
-        inline float kernel_fn(float dist) {
-            return 20 * pow(K_LIQUID_RADIUS - dist, 2);
+        inline float kernel_fn_water(float dist) {
+            return 180 * pow(K_LIQUID_RADIUS - dist, 2);
         }
-
+        
         void compute_vel_all() {
             // 1. 所有粒子计算SPH应力（优化：液体附近粒子）
             // 2. 各个粒子加速度累加到state_next上
             int r_neibor = f2i(ceilf(K_LIQUID_RADIUS));
             liquid_buf.reset_p(state_cur.particles);
 
-            int il = 0;
             for (int ip = 0; ip < state_cur.particles; ip++) {
                 liquid_buf.p_im_pos[ip] = state_cur.p_pos[ip];
                 liquid_buf.p_im_vel[ip] = state_cur.p_vel[ip];
-                if (state_cur.p_type[ip] == ParticleType::Water) {
-                    liquid_buf.p_idx_mapping[ip] = il;
-                    il++;
-                }
-                else {
-                    liquid_buf.p_idx_mapping[ip] = -1;
-                }
             }
 
             for (int ik = 0; ik < K_LIQUID_ITERATIONS; ik++) {
-                liquid_buf.reset_lp(0);
+                liquid_buf.swap();
 
                 for (int ip = 0; ip < state_cur.particles; ip++) {
                     vec2 acc = vec2();
-                    ivec2 pos = f2i(liquid_buf.p_im_pos[ip]);
+                    ivec2 pos = f2i(liquid_buf.p_im_pos0[ip]);
                     ParticleType cur_type = state_cur.p_type[ip];
                     if (cur_type == ParticleType::Iron) continue;
                     float mass = particle_mass(cur_type);
-                    iterate_neighbor_liquid(pos, r_neibor, [this, mass, &ip, &acc](int t_ip) {
-                        if (state_cur.p_type[ip] != ParticleType::Water) return;
+                    iterate_neighbor_particles(pos, r_neibor, [this, mass, &ip, &acc](int t_ip) {
+                        ParticleType cur_type = state_cur.p_type[ip];
+                        ParticleType t_type = state_cur.p_type[t_ip];
+                        if (cur_type != ParticleType::Water) return;
 
                         vec2 f_press = vec2();
                         vec2 f_visc = vec2();
                         if (t_ip == ip) return;
 
-                        vec2 pos_diff = liquid_buf.p_im_pos[t_ip] - liquid_buf.p_im_pos[ip];
-                        vec2 vel_diff = liquid_buf.p_im_vel[t_ip] - liquid_buf.p_im_vel[ip];
-                        //vec2 pos_diff = state_cur.p_pos[t_ip] - state_cur.p_pos[ip];
-                        //vec2 vel_diff = state_cur.p_vel[t_ip] - state_cur.p_vel[ip];
+                        vec2 pos_diff = liquid_buf.p_im_pos0[t_ip] - liquid_buf.p_im_pos0[ip];
+                        vec2 vel_diff = liquid_buf.p_im_vel0[t_ip] - liquid_buf.p_im_vel0[ip];
 
                         float t_mass = particle_mass(state_cur.p_type[t_ip]);
-
-                        vec2 jitter = vec2(random(-1, 1), random(-1, 1));
-                        pos_diff += jitter * 0.1f;
-
                         float r = length(pos_diff);
+
                         if (r <= 0.01) {
                             // 防止normalize零向量
                             // 此处随机给一个方向
@@ -346,20 +337,20 @@ namespace Simflow {
                         }
                         if (r < K_LIQUID_RADIUS)
                         {
-                            int t_il = liquid_buf.p_idx_mapping[t_ip];
-                            vec2 f_custom = -normalize(pos_diff) * mass * kernel_fn(r);
+                            vec2 f_custom = -normalize(pos_diff) * t_mass * kernel_fn_water(r / K_LIQUID_RADIUS);
                             vec2 f = f_custom;
                             acc += f / mass;
                         }
 
                     });
-                    if (length(acc) > 1000) {
-                        int debug = 1;
+                    float ratio = length(acc) / 100.f;
+                    if (ratio > 1.f) {
+                        acc /= ratio;
                     }
                     acc += sample_acc_air_g(ip);
 
-                    liquid_buf.p_im_vel[ip] += acc * K_DT / float(K_LIQUID_ITERATIONS);
-                    liquid_buf.p_im_pos[ip] += liquid_buf.p_im_vel[ip] * K_DT / float(K_LIQUID_ITERATIONS);
+                    liquid_buf.p_im_vel[ip] = liquid_buf.p_im_vel0[ip] + acc * K_DT / float(K_LIQUID_ITERATIONS);
+                    liquid_buf.p_im_pos[ip] = liquid_buf.p_im_pos0[ip] + liquid_buf.p_im_vel[ip] * K_DT / float(K_LIQUID_ITERATIONS);
 
                 }
             }
@@ -375,12 +366,6 @@ namespace Simflow {
 #pragma endregion
 
 #pragma region 气流
-
-        //int myclamp(int v, int min, int max) {
-        //    v = v < min ? min : v;
-        //    v = v > max ? max : v;
-        //    return v;
-        //}
 
         int safe_air_idx(ivec2 p_air) {
             int wlim = width / K_AIRFLOW_DOWNSAMPLE - 1;
@@ -427,10 +412,6 @@ namespace Simflow {
         }
 
         vec2 bilinear_sample_air_v(ivec2 pos) {
-            //vec2 v = bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
-            //v += bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
-            //v += bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
-
             return bilinear_sample_air(pos, [this](ivec2 pos) { return safe_sample_air_v(pos); });
         }
 
@@ -480,35 +461,21 @@ namespace Simflow {
             vec2 delta = normalize(end - start) * K_COLLISION_STEP_LENGTH;
             vec2 cur = start;//排除所在的第一个位置，从第二个开始
 
-            // 跳出当前像素
-            while (f2i(cur) == f2i(start)) {
+            if (steps < 1) {
+                steps = 1;
+            }
+
+            delta = (end - start) / float(steps);
+
+            for (int i = 0; i < steps; i++) {
                 cur += delta;
-            }
 
-            if (steps <= 1)//如果不满一格或刚好一格，取end做判断
-            {
-                if (!in_bound(f2i(cur))) {
-                    final_pos = cur;
-                    goto exit;
-                }
-                PixelParticleList temp = state_cur.map_index[idx(f2i(cur))];
-                if (!temp.nil()) {
-                    int t = random_sample(temp.from, temp.to);
-                    if (state_cur.p_type[t] == ParticleType::Water && ignore_liquid) goto exit;
-                    last_target = t;
-                    if (idx(f2i(start)) == idx(f2i(cur)))final_pos = cur;
-                    else final_pos = start;
-                }
-                goto exit;
-            }
-
-            for (int i = 1; i < steps; i++) {
                 ivec2 m_pos = f2i(cur);
                 bool ext = false;
 
                 if (in_bound(m_pos)) {
                     PixelParticleList lst = state_cur.map_index[idx(m_pos)];
-                    if (!lst.nil() && idx(f2i(cur)) != idx(f2i(cur - delta))) {
+                    if (!lst.nil() && idx(f2i(cur)) != idx(f2i(cur - delta)) && f2i(cur) != f2i(start)) {
                         ext = true;
                         final_pos = cur - delta;
                         last_target = random_sample(lst.from, lst.to);
@@ -521,7 +488,6 @@ namespace Simflow {
                 if (ext) {
                     goto exit;
                 }
-                cur += delta;
             }
         exit:
             result.pos = final_pos;
@@ -535,7 +501,7 @@ namespace Simflow {
                 ParticleType cur_type = state_cur.p_type[ip];
                 if (cur_type == ParticleType::Iron) continue;
 
-                vec2 v = state_cur.p_vel[ip];
+                vec2 v = state_next.p_vel[ip];
                 vec2 pos_old = state_cur.p_pos[ip];
                 vec2 pos_new = pos_old + v * K_DT;
                 CollisionDetectionResult c_res;
@@ -568,8 +534,6 @@ namespace Simflow {
                     state_next.p_vel[ip] = vec2(v1x1, v1y1);
                     state_next.p_vel[c_res.target_index] = vec2(v2x1, v2y1);
                 }
-                vec2 jitter = vec2(random(-1, 1), random(-1, 1));
-                c_res.pos += jitter * 0.1f;
                 state_next.p_pos[ip] = c_res.pos;
 
                 ivec2 coord = f2i(c_res.pos);
@@ -711,7 +675,7 @@ namespace Simflow {
             }
             prepare();
 
-
+            // TODO: 保存空气速度的副本，用于并行化
             compute_heat();
             compute_vel();
             compute_air_flow();
