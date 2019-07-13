@@ -39,8 +39,9 @@ namespace Simflow {
                 for (int i = 0; i < m; i += 4) {
                     float p = data.pressure[j][i];
                     int x = i / 4, y = j / 4;
-                    set_color(p);
-                    glVertex2i(x, y);                }
+                    set_color_pressure(p);
+                    glVertex2i(x, y);                
+				}
             }
             glEnd();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -48,11 +49,42 @@ namespace Simflow {
         }
     };
 
+	class HeatGraphRenderer {
+		GLuint framebuffer = -1;
+		GLuint framebuffer_tex = -1;
+
+	public:
+		HeatGraphRenderer() {
+			create_framebuffer(&framebuffer, &framebuffer_tex, 128, 128);
+		}
+
+		// 返回纹理id
+		GLuint render_texture(const FrameData& data) {
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			reset_matrix(128, 128);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBegin(GL_POINTS);
+			for (int i = 0; i < data.particles.size(); i++)
+			{
+				float x = data.particles[i].position.x / 4;
+				float y = data.particles[i].position.y / 4;
+				float temperature = data.particles[i].temperature;
+				set_color_heat(temperature);
+				glVertex2i(x, y);
+			}
+			glEnd();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			return framebuffer_tex;
+		}
+	};
 
     class GameView {
     protected:
         /*压强图的纹理*/
         unique_ptr<PressureGraphRenderer> pressure_graph = nullptr;
+
+		/*温度图的纹理*/
+        unique_ptr<HeatGraphRenderer> heat_graph = nullptr;
 
         /*绘制沙子与绘制固体的bool值*/
         bool draw_sand;
