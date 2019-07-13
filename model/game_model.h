@@ -113,6 +113,16 @@ namespace Simflow {
             }
         }
 
+        void save_air_state() {
+            for (int y = 0; y < air_vel_buf.height(); y++) {
+                for (int x = 0; x < air_vel_buf.width(); x++) {
+                    int im_air = y * width / K_AIRFLOW_DOWNSAMPLE + x;
+                    air_vel_buf[y][x] = vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+                    air_p_buf[y][x] = airflow_solver.p[im_air];
+                }
+            }
+        }
+
 
 #pragma region 温度计算
 
@@ -197,7 +207,6 @@ namespace Simflow {
 #pragma region 速度计算
 
         void compute_vel() {
-            //compute_vel_basic();
             compute_vel_all();
             constraint_solid();
         }
@@ -377,28 +386,24 @@ namespace Simflow {
 
 #pragma region 气流
 
-        //int myclamp(int v, int min, int max) {
-        //    v = v < min ? min : v;
-        //    v = v > max ? max : v;
-        //    return v;
-        //}
-
         int safe_air_idx(ivec2 p_air) {
             int wlim = width / K_AIRFLOW_DOWNSAMPLE - 1;
             int hlim = height / K_AIRFLOW_DOWNSAMPLE - 1;
             p_air.x = clamp(p_air.x, 0, wlim);
             p_air.y = clamp(p_air.y, 0, hlim);
-            return p_air.y * (width / K_AIRFLOW_DOWNSAMPLE) + p_air.x;
+            return p_air.y* (width / K_AIRFLOW_DOWNSAMPLE) + p_air.x;
         }
 
         vec2 safe_sample_air_v(ivec2 p_air) {
-            int im_air = safe_air_idx(p_air);
-            return vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+            //int im_air = safe_air_idx(p_air);
+            //return vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+            return air_vel_buf[p_air.y][p_air.x];
         }
 
         float safe_sample_air_p(ivec2 p_air) {
-            int im_air = safe_air_idx(p_air);
-            return airflow_solver.p[im_air];
+            //int im_air = safe_air_idx(p_air);
+            //return airflow_solver.p[im_air];
+            return air_p_buf[p_air.y][p_air.x];
         }
 
 
@@ -428,10 +433,6 @@ namespace Simflow {
         }
 
         vec2 bilinear_sample_air_v(ivec2 pos) {
-            //vec2 v = bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
-            //v += bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
-            //v += bilinear_sample_air(pos, [this](ivec2 pos) { return vec2(); });
-
             return bilinear_sample_air(pos, [this](ivec2 pos) { return safe_sample_air_v(pos); });
         }
 
@@ -684,9 +685,17 @@ namespace Simflow {
 #pragma endregion
 
         Array2D<float> pressure;
-		Parallel parallel_line;
+        Array2D<float> air_p_buf;
+        Array2D<vec2> air_vel_buf;
+        Parallel parallel_line;
     public:
-        GameModel() : state_cur(width * height), state_next(), pressure(height, width) { //width(w), height(h), 
+        GameModel() :
+            state_cur(width * height),
+            state_next(),
+            pressure(height, width),
+            air_p_buf(height / K_AIRFLOW_DOWNSAMPLE, width / K_AIRFLOW_DOWNSAMPLE),
+            air_vel_buf(height / K_AIRFLOW_DOWNSAMPLE, width / K_AIRFLOW_DOWNSAMPLE)
+        {
             assert(width % K_AIRFLOW_DOWNSAMPLE == 0);
             assert(height % K_AIRFLOW_DOWNSAMPLE == 0);
             assert(width % K_LIQUID_GRID_DOWNSAMPLE == 0);
@@ -702,32 +711,27 @@ namespace Simflow {
         };
 
 
+
         void update() {
             frame_counter++;
 
             Timer t;
 
-            if (frame_counter == 161) {
-                int debug = 1;
-            }
             prepare();
+            save_air_state();
 
-			parallel_line.invoke({
-				function([this]() { compute_heat(); }),
-				function([this]() { compute_vel(); })
-				//function([this]() { compute_air_flow(); })
-				}
-			);
-            //compute_heat();
-            //compute_vel();
-            compute_air_flow();
+            parallel_line.invoke({
+                function([this]() { compute_heat(); }),
+                function([this]() { compute_vel(); }),
+                function([this]() { compute_air_flow(); })
+                });
 
             compute_position();
             handle_change_heat();
             handle_new_particles();
             complete();
 
-            cout << "frametime: " << t.ms() << endl;
+            cout << "frame time: " << t.ms() << endl;
         }
 
         void set_new_particles(ParticleBrush brush) {
