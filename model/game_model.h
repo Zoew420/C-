@@ -55,13 +55,14 @@ namespace Simflow {
             vector<BlockLiquidList> map_block_liquid;
             vector<ParticleType> p_type;
             vector<float> p_heat;
-            vector<vec2> p_pos, p_vel;
+            vector<vec2> p_pos, p_vel, p_movement;
             StateCur(int n_map) : map_index(n_map), map_block_liquid(n_map / K_LIQUID_GRID_DOWNSAMPLE / K_LIQUID_GRID_DOWNSAMPLE) {}
             void reset(int n) {
                 particles = n;
                 p_type.resize(n);
                 p_pos.resize(n);
                 p_vel.resize(n);
+                p_movement.resize(n);
                 p_heat.resize(n);
                 for (auto& lst : map_index) {
                     lst = PixelParticleList();
@@ -76,12 +77,13 @@ namespace Simflow {
             int particles = 0;
             vector<ParticleType> p_type;
             vector<float> p_heat;
-            vector<vec2> p_pos, p_vel;
+            vector<vec2> p_pos, p_vel, p_movement;
             void reset(int n) {
                 particles = n;
                 p_type.resize(n);
                 p_pos.resize(n);
                 p_vel.resize(n);
+                p_movement.resize(n);
                 p_heat.resize(n);
             }
         } state_next;
@@ -109,6 +111,7 @@ namespace Simflow {
                 state_next.p_type[i] = state_cur.p_type[i];
                 state_next.p_pos[i] = state_cur.p_pos[i];
                 state_next.p_vel[i] = state_cur.p_vel[i];
+                state_next.p_movement[i] = vec2();
                 state_next.p_heat[i] = state_cur.p_heat[i];
             }
         }
@@ -434,7 +437,7 @@ namespace Simflow {
                 if (bound_dist(pos) <= 2) continue;
                 int im_air = idx_air(pos);
                 if (state_cur.p_type[i] != ParticleType::Iron) {
-                    vec2 diff = state_cur.p_vel[i] - vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
+                    vec2 diff = state_cur.p_movement[i] / K_DT - vec2(airflow_solver.getVX()[im_air], airflow_solver.getVY()[im_air]);
                     airflow_solver.getVX()[im_air] += diff.x / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                     airflow_solver.getVY()[im_air] += diff.y / K_AIRFLOW_DOWNSAMPLE / K_AIRFLOW_DOWNSAMPLE;
                 }
@@ -503,13 +506,19 @@ namespace Simflow {
             return last_target != -1;
         }
 
+        vector<vec2> vel_buf;
         void compute_position() {
+            vel_buf.resize(state_cur.particles);
+            for (int ip = 0; ip < state_cur.particles; ip++) {
+                vel_buf[ip] = state_next.p_vel[ip];
+            }
+
             // 更新位置，碰撞检测
             for (int ip = 0; ip < state_cur.particles; ip++) {
                 ParticleType cur_type = state_cur.p_type[ip];
                 if (cur_type == ParticleType::Iron) continue;
 
-                vec2 v = state_next.p_vel[ip];
+                vec2 v = vel_buf[ip];
                 vec2 pos_old = state_cur.p_pos[ip];
                 vec2 pos_new = pos_old + v * K_DT;
                 CollisionDetectionResult c_res;
@@ -527,11 +536,11 @@ namespace Simflow {
 
                     //v1: active one
                     //v2: passive one
-                    v1x0 = state_next.p_vel[ip].x;
-                    v2x0 = state_next.p_vel[c_res.target_index].x;
+                    v1x0 = vel_buf[ip].x;
+                    v2x0 = vel_buf[c_res.target_index].x;
 
-                    v1y0 = state_next.p_vel[ip].y;
-                    v2y0 = state_next.p_vel[c_res.target_index].y;
+                    v1y0 = vel_buf[ip].y;
+                    v2y0 = vel_buf[c_res.target_index].y;
 
                     v1x1 = 1.0f * (m1 * v1x0 + m2 * v2x0 + K_COLLISION_RESTITUTION * m2 * (v2x0 - v1x0)) / (m1 + m2);
                     v1y1 = 1.0f * (m1 * v1y0 + m2 * v2y0 + K_COLLISION_RESTITUTION * m2 * (v2y0 - v1y0)) / (m1 + m2);
@@ -543,6 +552,7 @@ namespace Simflow {
                     state_next.p_vel[c_res.target_index] = vec2(v2x1, v2y1);
                 }
                 state_next.p_pos[ip] = c_res.pos;
+                state_next.p_movement[ip] = state_next.p_pos[ip] - state_cur.p_pos[ip];
 
                 ivec2 coord = f2i(c_res.pos);
                 if (!in_bound(coord)) {
@@ -558,15 +568,13 @@ namespace Simflow {
             vector<int> sort; // 初始时为0..particles-1，根据画布下标排序
         } reorder_buf;
 
+
         // 完成StateNext的所有计算，将结果收集到StateCur中
         void complete() {
             reorder_buf.p_idx.clear();
             reorder_buf.sort.clear();
             for (int ip = 0; ip < state_next.particles; ip++) {
                 ivec2 pos = f2i(state_next.p_pos[ip]);
-                if (pos == ivec2(35, 28)) {
-                    int a = 1;
-                }
                 reorder_buf.p_idx.push_back(idx(pos));
                 if (state_next.p_type[ip] != ParticleType::None) {
                     reorder_buf.sort.push_back(ip);
@@ -582,14 +590,12 @@ namespace Simflow {
             state_cur.reset(n_new);
             for (int ip = 0; ip < n_new; ip++) {
                 int old_ip = reorder_buf.sort[ip];
-                if (old_ip == 59) {
-                    int a = 1;
-                }
                 // 复制数据
                 vec2 pos = state_next.p_pos[old_ip];
                 state_cur.p_pos[ip] = pos;
                 state_cur.p_type[ip] = state_next.p_type[old_ip];
                 state_cur.p_vel[ip] = state_next.p_vel[old_ip];
+                state_cur.p_movement[ip] = state_next.p_movement[old_ip];
                 state_cur.p_heat[ip] = state_next.p_heat[old_ip];
                 // 构造画布索引
                 PixelParticleList& cur_lst = state_cur.map_index[idx(f2i(pos))];
@@ -621,6 +627,7 @@ namespace Simflow {
                                 state_next.p_pos.push_back(vec2(x, y) + jitter);
                                 state_next.p_type.push_back(cur_particle_brush.type);
                                 state_next.p_vel.push_back(vec2());
+                                state_next.p_movement.push_back(vec2());
                                 state_next.p_heat.push_back(25);
                             }
                         }
@@ -697,6 +704,7 @@ namespace Simflow {
             complete();
 
             cout << "frame time: " << t.ms() << endl;
+            cout << "particles: " << state_cur.particles << endl;
         }
 
         void set_new_particles(ParticleBrush brush) {

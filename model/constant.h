@@ -14,10 +14,10 @@ namespace Simflow {
     const float K_LIQUID_RADIUS = 2.f;//16.f * K_LIQUID_SCALE; // kernel radius
 
     const float K_COLLISION_STEP_LENGTH = .5;
-    const float K_COLLISION_RESTITUTION = 0.2;
+    const float K_COLLISION_RESTITUTION = 0.0;
 
     const float K_HEAT_DELTA = 5.0f;
-    const int K_HEAT_ITERATIONS = 10;
+    const int K_HEAT_ITERATIONS = 20;
 
     const float EPS = 1E-6;
 }
