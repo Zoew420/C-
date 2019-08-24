@@ -51,7 +51,7 @@ int main() {
                 my3d::present::set_pixel(c, r, cc2);
             }
         }
-        auto& res = gm.query_particles();
+        const auto& res = gm.query_particles();
         for (int i = 0; i < res.type.size(); i++) {
             ivec2 pos = f2i(res.position[i]);
             ParticleType type = res.type[i];

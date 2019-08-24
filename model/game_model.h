@@ -272,7 +272,7 @@ namespace Simflow {
         } liquid_buf;
 
         template<typename F>
-        void iterate_neighbor_particles(ivec2 pos, int r_neibor, F & f) {
+        void iterate_neighbor_particles(ivec2 pos, int r_neibor, F f) {
             for (int dy = -r_neibor; dy <= r_neibor; dy++) {
                 for (int dx = r_neibor; dx >= -r_neibor; dx--) {
                     ivec2 n_pos = pos + ivec2(dx, dy);
@@ -398,7 +398,7 @@ namespace Simflow {
 
 
         template<typename F>
-        auto bilinear_sample_air(ivec2 pos, F & f) -> decltype(f(ivec2())) {
+        auto bilinear_sample_air(ivec2 pos, F f) -> decltype(f(ivec2())) {
             using T = decltype(f(ivec2()));
             pos -= ivec2(K_AIRFLOW_DOWNSAMPLE) / 2;
             ivec2 base = pos / K_AIRFLOW_DOWNSAMPLE;
