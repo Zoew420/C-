@@ -42,7 +42,7 @@
 
 如下图，我们在空中释放了一堆沙子（黄），它们飘落到了固体（白）上，形成沙丘。
 
-<img src="../img/sand.png" width="500"/>
+<img src="./img/sand.png" width="500"/>
 
 
 ### 气流解算
@@ -51,16 +51,16 @@
 
 注意到右下角的气压图，红色为正压区，蓝色为负压区。大堆下落粒子的下方，空气受挤压，呈正压（红色）；而下落粒子带动空气流动，在两侧形成环流，环流中心呈负压（蓝色）。这是解算NS方程的结果。
   
-<img src="../img/visualization1.png" width="500"/>
+<img src="./img/visualization1.png" width="500"/>
 
 
 ### 液体效果
 
 如下图，我们先用固体构建了一个容器，再在右上方添加了一些水。水顺容器壁留下，最终形成了稳定的液面。
 
-<img src="../img/water1.png" width="500"/>
+<img src="./img/water1.png" width="500"/>
 
-<img src="../img/water2.png" width="500"/>
+<img src="./img/water2.png" width="500"/>
 
 
 ### 温度解算
@@ -69,7 +69,7 @@
 
 观察程序右下方的温度图，红色为高温，蓝色为低温。我们加热了这块固体的左上角，此时温度正在向其他部分传播，呈现出了温度梯度。这是解算温度方程的结果。
 
-  <img src="../img/visualization2.png" width="500"/>
+  <img src="./img/visualization2.png" width="500"/>
 
 
 ## 小组成员
